@@ -202,6 +202,11 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .chip.on .n{color:var(--green)}
 .chips-tools{display:flex; gap:12px; margin-top:8px; font-size:.8rem; align-items:center}
 .sorttools{margin-left:auto; display:inline-flex; gap:4px; align-items:center}
+.chips-top{display:flex; justify-content:flex-end; margin-bottom:6px}
+.chipbox.collapsed .chips-top{display:none}
+.lvlhead{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+.lvlhead b{font-size:.9rem}
+.lvlrow .chips-top{grid-column:1/-1; margin:0 0 2px}
 .sorttools button{border:1px solid var(--rule); background:var(--card); color:var(--ink-2); border-radius:var(--radius-s); padding:2px 7px; font-size:.75rem; font-weight:700; cursor:pointer; line-height:1.4}
 .sorttools button:hover{border-color:var(--green); color:var(--green)}
 .lvlrow .sorttools{margin-left:auto}
@@ -220,6 +225,7 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .lvlrow .chipbox{display:contents}
 .lvlrow .chipbox .cb-toggle{grid-column:2; grid-row:1; margin:0}
 .lvlrow .chipbox .chips-filter{grid-column:1/-1}
+.lvlrow .chipbox .chips-top{grid-column:1/-1; justify-content:flex-start}
 .lvlrow .chipbox .chips{grid-column:1/-1}
 .lvlrow .chipbox .chips:empty{display:none}
 .lvlrow .chipbox.collapsed .chips-tools{display:none}
@@ -344,7 +350,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.8.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.8.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -377,9 +383,10 @@ details.base .body > p{margin:12px 0 14px}
           afsnit med eksempler; hvert felt i panelet har et spørgsmålstegn med forklaring
    1.8.0  hver liste af valgmuligheder kan sorteres alfabetisk eller efter antal og vendes om;
           delopstilling og mat. type står alfabetisk som udgangspunkt, resten efter antal
+   1.8.1  sorteringsknapperne står øverst i listen i stedet for nederst
    =================================================================== */
 
-const VERSION = '1.8.0';
+const VERSION = '1.8.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -705,7 +712,7 @@ function baseView(){
     const vals = sortVals('lv'+i, 'base_lv'+i, fullModel.fields['lv'+i].values); if (vals.length===1 && vals[0][0]==='') return '';
     const ex = new Set(S.base['lv'+i]||[]);
     const chips = vals.map(([v,c]) => `<label class="chip ${ex.has(v)?'':'on'}"><input type="checkbox" name="base_lv${i}" value="${esc(v)}" ${ex.has(v)?'':'checked'}> ${esc(disp(v))} <span class="n">${nf(c)}</span></label>`).join('');
-    return `<div class="lvl"><b>${esc(n)}</b><div class="chipbox" data-name="base_lv${i}"><div class="chips">${chips}</div><div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button>${vals.length>1?sortTools('lv'+i,'base_lv'+i):''}</div></div></div>`;
+    return `<div class="lvl"><div class="lvlhead"><b>${esc(n)}</b>${vals.length>1?sortTools('lv'+i,'base_lv'+i):''}</div><div class="chipbox" data-name="base_lv${i}"><div class="chips">${chips}</div><div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button></div></div></div>`;
   }).join('');
   return `<details class="base" ${S.baseOpen?'open':''}><summary><span>Grundopsætning</span><span class="hint">${S.model.excluded ? nf(S.model.excluded)+' materialer fravalgt' : 'alt er med'}</span><span class="chev">${ICON.chev}</span></summary>
     <div class="body"><p class="muted small">Fravælg de steder, der aldrig skal med – fx et arkiv eller tomme filialer. Valget huskes i denne browser og gælder alle opgaver.</p><div class="levelgrid">${parts}</div></div></details>`;
@@ -806,8 +813,8 @@ function chipList(field, selected, name, opts={}){
   const many = vals.length > 40; const col = !!opts.collapsible && !S.chipOpen.has(name);
   const chips = vals.map(([v,n]) => `<label class="chip ${sel.has(v)?'on':''} ${col&&!sel.has(v)?'hid':''}" data-v="${esc(v)}"><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.has(v)?'checked':''}> ${esc(disp(v))} <span class="n">${nf(n)}</span></label>`).join('');
   const unit = opts.unit || 'værdier';
-  return `<div class="chipbox ${col?'collapsed':''}" data-name="${name}">${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
-    <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${vals.length>1?sortTools(field,name):''}${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${opts.collapsible?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${col?(opts.expandLabel || `Vis alle ${vals.length} ${unit}`):'Skjul'}</button>`:''}</div>`;
+  return `<div class="chipbox ${col?'collapsed':''}" data-name="${name}">${vals.length>1?`<div class="chips-top when-open">${sortTools(field,name)}</div>`:''}${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
+    <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${opts.collapsible?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${col?(opts.expandLabel || `Vis alle ${vals.length} ${unit}`):'Skjul'}</button>`:''}</div>`;
 }
 function levelChecks(sel){
   const m=S.model; const s=new Set(sel||[]);
