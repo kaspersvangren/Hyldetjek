@@ -127,6 +127,7 @@ p{margin:0}
 .loaded .acts{display:flex; gap:8px; flex-wrap:wrap}
 .loaded .filelist{flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; font-size:.8rem; color:var(--ink-3); border-top:1px solid var(--rule-2); padding-top:10px; margin-top:2px}
 .loaded .filelist:empty{display:none}
+.linkbtn{background:none; border:0; padding:0; color:var(--green); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:2px}
 .warn{margin:0 0 32px; padding:12px 16px; border-radius:var(--radius-s); background:var(--amber-2); color:var(--ink); border-left:4px solid var(--amber); font-size:.925rem}
 .err{margin:0 0 32px; padding:12px 16px; border-radius:var(--radius-s); background:var(--red-2); border-left:4px solid var(--red); font-size:.925rem}
 
@@ -323,7 +324,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.4.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.4.2 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -341,9 +342,11 @@ details.base .body > p{margin:12px 0 14px}
           som genveje under funktionen på forsiden (åbner og kører med det samme); Gem sker i
           en lille linje i panelet i stedet for en dialogboks
    1.4.1  overskriften "Tæl inden for samme…" i ét stykke
+   1.4.2  dobbelte materialenumre: rækken uden "Hjemme" beholdes; klarere besked; knap til at
+          hente numrene som CSV
    =================================================================== */
 
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -548,7 +551,7 @@ function pickDefault(model, field, wanted){
 
 
 /* ================= UI ================= */
-const S = { fileName:'', fileCount:0, files:[], presetName:'', headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
+const S = { fileName:'', fileCount:0, files:[], presetName:'', dupeNrs:[], headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
             settings:{}, results:null, error:'', checked:new Set(), open:new Set(), sort:'forf', shown:150, warn:'' };
 const $app = document.getElementById('app');
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -607,12 +610,20 @@ function missingRoles(){ return ROLES.filter(r=>r.req && !S.map[r.id]); }
 function finishLoad(){
   if (missingRoles().length){ S.model=null; render(); return; }
   S.full = parseRecs(S.rows, S.map);
-  { const seen = new Set(); const uniq = []; let d = 0; for (const x of S.full.recs){ if (x.nr && seen.has(x.nr)){ d++; continue; } if (x.nr) seen.add(x.nr); uniq.push(x); } S.full.recs = uniq; S.dupes = d; uniq.forEach((x,i)=>x.id=i); }
+  { const byNr = new Map(); const uniq = []; const dupNrs = new Set(); let d = 0;
+    for (const x of S.full.recs){
+      if (!x.nr){ uniq.push(x); continue; }
+      const prev = byNr.get(x.nr);
+      if (prev === undefined){ byNr.set(x.nr, uniq.length); uniq.push(x); continue; }
+      d++; dupNrs.add(x.nr);
+      if (uniq[prev].status === 'Hjemme' && x.status !== 'Hjemme') uniq[prev] = x;   // bogen er ikke på hylden – behold den række, der siger det
+    }
+    S.full.recs = uniq; S.dupes = d; S.dupeNrs = [...dupNrs]; uniq.forEach((x,i)=>x.id=i); }
   S.base = sanitizeBase(load('base',{}));
   applyBase();
   const bad = S.model.recs.filter(x=>!x.nr).length;
   if (bad) S.warn = nf(bad)+' rækker uden materialenummer er sprunget over ved eksport.';
-  if (S.dupes) S.warn += (S.warn?' ':'')+nf(S.dupes)+' rækker med et materialenummer, der allerede var læst, er sprunget over.';
+  if (S.dupes) S.warn += (S.warn?' ':'')+nf(S.dupeNrs.length)+(S.dupeNrs.length===1?' materiale stod':' materialer stod')+' to gange i filen, formentlig fordi de skiftede status, mens udtrækket blev lavet. Kun én række er talt med.';
   if (!S.map.forf) S.warn += (S.warn?' ':'')+'Ingen forfatterkolonne fundet – der grupperes kun på titel.';
   S.results=null; S.checked=new Set(); S.open=new Set();
   render();
@@ -676,7 +687,7 @@ function homeView(){
     <div class="hero"><h1>Find det på hylderne, som Cicero ikke viser dig</h1><p>Læs en eksport af samlingen ind, vælg en opgave, og få en liste at gå ud med – eller en fil af materialenumre til Cicero.</p></div>
     ${mid}
     ${S.error?`<div class="err">${esc(S.error)}</div>`:''}
-    ${S.warn&&S.model?`<div class="warn">${esc(S.warn)}</div>`:''}
+    ${S.warn&&S.model?`<div class="warn">${esc(S.warn)}${S.dupes?` <button class="linkbtn" data-act="dupecsv">Hent numrene som CSV</button>`:''}</div>`:''}
     <ul class="fns">${fns}</ul></div>`;
 }
 
@@ -862,6 +873,11 @@ function run(){
   if (!S.error) toast(S.results.length ? `${nf(S.results.length)} titler fundet` : 'Ingen titler matcher');
 }
 function checkedItems(){ const ids=S.checked; return S.results.flatMap(g=>g.exp.filter(x=>ids.has(x.id))); }
+function downloadLines(lines, name){
+  const blob = new Blob([lines.join('\r\n')+'\r\n'], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
 function exportCsv(){
   const items = checkedItems().filter(x=>x.nr);
   const seen = new Set(); const lines = []; for (const x of items){ if (!seen.has(x.nr)){ seen.add(x.nr); lines.push(x.nr); } }
@@ -922,6 +938,7 @@ function onClick(e){
   if (act==='selall'||act==='selnone'){ S.checked = act==='selall' ? new Set(S.results.flatMap(g=>g.exp.map(x=>x.id))) : new Set(); refreshResults(); return; }
   if (act==='more'){ S.shown += 150; refreshResults(); return; }
   if (act==='csv'){ exportCsv(); return; }
+  if (act==='dupecsv'){ downloadLines(S.dupeNrs, `hyldetjek-dobbelte-${new Date().toISOString().slice(0,10)}.csv`); toast(`${nf(S.dupeNrs.length)} materialenumre hentet`); return; }
   if (act==='print'){ printList(); return; }
 }
 function onBaseChange(){
