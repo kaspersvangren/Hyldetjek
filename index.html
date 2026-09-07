@@ -165,7 +165,8 @@ details.howto summary::-webkit-details-marker{display:none}
 details.howto summary .chev{color:var(--ink-3); transition:transform .15s; display:flex}
 details.howto summary .chev svg{width:16px;height:16px}
 details.howto[open] summary .chev{transform:rotate(90deg)}
-details.howto dl{margin:0; padding:2px 16px 16px; border-top:1px solid var(--rule-2)}
+details.howto .lead{margin:0; padding:12px 16px 0; border-top:1px solid var(--rule-2); color:var(--ink-2); font-size:.9rem}
+details.howto dl{margin:0; padding:2px 16px 16px}
 details.howto dt{font-weight:700; font-size:.9rem; margin-top:12px}
 details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 
@@ -350,7 +351,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.8.2 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.8.3 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -386,9 +387,11 @@ details.base .body > p{margin:12px 0 14px}
    1.8.1  sorteringsknapperne står øverst i listen i stedet for nederst
    1.8.2  kun tekst: "og hører også til her" hedder nu "og har også et eksemplar her", og
           hjælpen forklarer forskellen på de to steder og på de to sammenlignende funktioner
+   1.8.3  kun tekst: vejledningerne er eksempler, ikke forskrifter – ingen antagelser om hvad
+          brugeren vil opnå
    =================================================================== */
 
-const VERSION = '1.8.2';
+const VERSION = '1.8.3';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -538,12 +541,12 @@ function sideDefined(side){ return !!(side && side.field && side.values && side.
 const FUNCTIONS = {
   flere: {
     title:'Flere eksemplarer',
-    short:'Har vi tre af den samme bog stående? Til tripletter, dubletter og udstillingsstakke.',
+    short:'Har vi flere af den samme bog stående?',
     explain:'Du vælger et antal, og får de titler, I har mindst så mange af stående hjemme lige nu.',
     howto:[
-      ['Tripletter på én hylde','Sæt antallet til 3 og kryds "Opstilling" og "Delopstilling" af under Tæl inden for samme. Så tælles kun eksemplarer, der står side om side, og du får de titler, der fylder tre pladser på samme hylde.'],
-      ['Dubletter','Det samme, men med antallet sat til 2. Bruges typisk kun, når der er pres på pladsen.'],
-      ['Bøger nok til en stak på udstillingen','Sæt antallet til 4 og lad Tæl inden for samme stå tom. Så tælles på tværs af hele samlingen — også magasinet — og du kan se, hvor der er nok eksemplarer til at lave en stak.']
+      ['Tre af samme bog på én hylde','Sæt antallet til 3 og kryds "Opstilling" og "Delopstilling" af under Tæl inden for samme. Så tælles kun eksemplarer, der står side om side, og du får de titler, der fylder tre pladser samme sted.'],
+      ['Fire af samme bog i hele samlingen','Sæt antallet til 4 og lad Tæl inden for samme stå tom. Så tælles på tværs af filialer, magasiner og hylder under ét.'],
+      ['Kun én bestemt del af samlingen','Brug "Søg i" til at afgrænse til fx en filial eller en enkelt opstilling, før du tæller.']
     ],
     defaults:(model)=>({ min:3, statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
@@ -559,11 +562,12 @@ const FUNCTIONS = {
   },
   ogsaa: {
     title:'Hjemme her, og også dér',
-    short:'Står den samme bog hjemme to steder på én gang? Til kvik-hylden.',
+    short:'Står den samme bog hjemme to steder på én gang?',
     explain:'Du peger på to steder, og får de titler, der står hjemme begge steder samtidig.',
     howto:[
-      ['Ryd op på kvik-hylden','Sæt det første sted til kvik-hylden og det andet til den almindelige hylde. Så finder den de kvik-bøger, man alligevel kan låne med hjem på normale vilkår — dem kan du tage af kvik-hylden, så den bliver et sted, hvor man gør et kup.'],
-      ['Hvad skal vi eksportere?','Lad "kun fra det første sted" stå. Så får du numrene på kvik-eksemplarerne — dem, du skal gøre noget ved — og ikke bøgerne på den almindelige hylde.']
+      ['Kvik-hylden og den almindelige hylde','Sæt det første sted til kvik-hylden og det andet til den almindelige hylde. Så får du de titler, der står hjemme begge steder samtidig.'],
+      ['To filialer','Sæt de to steder til hver sin filial, og du får titler, der lige nu er hjemme begge steder.'],
+      ['Hvilke eksemplarer kommer med i eksporten','"Kun fra det første sted" giver numrene på eksemplarerne fra det øverste sted. "Fra begge steder" giver dem alle.']
     ],
     defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
@@ -584,12 +588,12 @@ const FUNCTIONS = {
   },
   ikke: {
     title:'Hjemme her, men ikke dér',
-    short:'Er den eneste bog hjemme nede på magasinet? Til at hente bøger op på hylden.',
+    short:'Er dette det eneste sted, bogen er hjemme?',
     explain:'Du peger på ét sted, og får de titler, der lige nu kun er hjemme dér — alle andre eksemplarer er udlånt eller står slet ikke der.',
     howto:[
-      ['Bøger, der bør op fra magasinet','Sæt det første sted til magasinet og det andet til udlånet. Så får du titler, hvor det eneste hjemmeværende eksemplar står på magasinet, selvom bogen også hører til på hylden. Dem kan du hente op.'],
-      ['Hvorfor det andet sted?','Uden det får du også bøger, I kun har på magasin. Dem er der som regel ingen grund til at gøre noget ved.'],
-      ['Én filial frem for en anden','De to steder behøver ikke være magasin og udlån. Sæt dem til to filialer, og du får titler, der lige nu kun er hjemme på den ene.'],
+      ['Kun hjemme på magasinet','Sæt det første sted til magasinet. Så får du titler, hvor det eneste hjemmeværende eksemplar står dér, og intet står hjemme andre steder.'],
+      ['Kun hjemme på magasinet, men findes også i udlånet','Sæt derudover det andet sted til udlånet. Så snævres listen ind til titler, der også har et eksemplar registreret i udlånet — uanset om det er hjemme eller udlånt. Lader du feltet stå tomt, kommer titler, I kun har på magasin, også med.'],
+      ['Kun hjemme på én filial','De to steder behøver ikke være magasin og udlån. Sæt dem til hver sin filial, og du får titler, der lige nu kun er hjemme på den ene.'],
       ['Forskellen på de to steder','Det øverste sted er dét, du vil finde bøger på: der skal stå mindst ét eksemplar, som er hjemme – og der må ikke være et hjemme nogen andre steder i samlingen. Det nederste sted er en si: titlen skal desuden have et eksemplar registreret dér, og om det står på hylden eller er udlånt, er lige meget.'],
       ['Forskellen på denne og "Hjemme her, og også dér"','Den anden funktion finder bøger, der står hjemme to steder på én gang. Denne finder bøger, hvor ét sted er det eneste sted, de er hjemme. Den ene leder efter et sammenfald, den anden efter et fravær.']
     ],
@@ -788,7 +792,7 @@ function toolView(){
   const f = FUNCTIONS[S.fn];
   return `<div class="wrap">${topBar()}
     <div class="toolhead"><div><button class="back" data-act="home">${ICON.back} Alle opgaver</button><h1>${esc(f.title)}</h1><p class="explain">${esc(f.explain)}</p>
-      ${f.howto?`<details class="howto"><summary><span>Sådan bruger du den</span><span class="chev">${ICON.chev}</span></summary><dl>${f.howto.map(([t,d])=>`<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('')}</dl></details>`:''}</div></div>
+      ${f.howto?`<details class="howto"><summary><span>Eksempler på brug</span><span class="chev">${ICON.chev}</span></summary><p class="lead">Eksempler på, hvad funktionen kan bruges til. Du bestemmer selv, hvordan du sætter den op.</p><dl>${f.howto.map(([t,d])=>`<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('')}</dl></details>`:''}</div></div>
     <div class="tool"><div class="panel" id="panel">${panelView()}</div><div class="results" id="results">${resultsView()}</div></div></div>`;
 }
 
