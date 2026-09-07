@@ -200,7 +200,11 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .chip .n{color:var(--ink-3); font-size:.78rem}
 .chip.on{background:var(--green-2); border-color:var(--green); color:var(--green-3)}
 .chip.on .n{color:var(--green)}
-.chips-tools{display:flex; gap:12px; margin-top:8px; font-size:.8rem}
+.chips-tools{display:flex; gap:12px; margin-top:8px; font-size:.8rem; align-items:center}
+.sorttools{margin-left:auto; display:inline-flex; gap:4px; align-items:center}
+.sorttools button{border:1px solid var(--rule); background:var(--card); color:var(--ink-2); border-radius:var(--radius-s); padding:2px 7px; font-size:.75rem; font-weight:700; cursor:pointer; line-height:1.4}
+.sorttools button:hover{border-color:var(--green); color:var(--green)}
+.lvlrow .sorttools{margin-left:auto}
 .chipbox.collapsed .chip.hid{display:none}
 .chipbox.collapsed .chips-filter{display:none}
 .chipbox.collapsed .when-open{display:none}
@@ -340,7 +344,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.7.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.8.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -371,9 +375,11 @@ details.base .body > p{margin:12px 0 14px}
           forskellige titelstrenge, ikke et sikkert antal udgaver
    1.7.0  hjælp overalt: hver funktion har en konkret beskrivelse og et "Sådan bruger du den"-
           afsnit med eksempler; hvert felt i panelet har et spørgsmålstegn med forklaring
+   1.8.0  hver liste af valgmuligheder kan sorteres alfabetisk eller efter antal og vendes om;
+          delopstilling og mat. type står alfabetisk som udgangspunkt, resten efter antal
    =================================================================== */
 
-const VERSION = '1.7.0';
+const VERSION = '1.8.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -602,7 +608,7 @@ function pickDefault(model, field, wanted){
 
 
 /* ================= UI ================= */
-const S = { fileName:'', fileCount:0, files:[], presetName:'', dupeNrs:[], headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
+const S = { fileName:'', fileCount:0, files:[], presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
             settings:{}, results:null, error:'', checked:new Set(), open:new Set(), sort:'forf', shown:150, warn:'' };
 const $app = document.getElementById('app');
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -670,6 +676,7 @@ function finishLoad(){
       if (uniq[prev].status === 'Hjemme' && x.status !== 'Hjemme') uniq[prev] = x;   // bogen er ikke på hylden – behold den række, der siger det
     }
     S.full.recs = uniq; S.dupes = d; S.dupeNrs = [...dupNrs]; uniq.forEach((x,i)=>x.id=i); }
+  S.chipSort = load('chipsort',{});
   S.base = sanitizeBase(load('base',{}));
   applyBase();
   const bad = S.model.recs.filter(x=>!x.nr).length;
@@ -695,10 +702,10 @@ function applyBase(){
 function baseView(){
   const fullModel = modelFrom(S.full.recs, S.full.maxLv, !!S.map.forf);
   const parts = fullModel.levelNames.map((n,i)=>{
-    const vals = fullModel.fields['lv'+i].values; if (vals.length===1 && vals[0][0]==='') return '';
+    const vals = sortVals('lv'+i, 'base_lv'+i, fullModel.fields['lv'+i].values); if (vals.length===1 && vals[0][0]==='') return '';
     const ex = new Set(S.base['lv'+i]||[]);
     const chips = vals.map(([v,c]) => `<label class="chip ${ex.has(v)?'':'on'}"><input type="checkbox" name="base_lv${i}" value="${esc(v)}" ${ex.has(v)?'':'checked'}> ${esc(disp(v))} <span class="n">${nf(c)}</span></label>`).join('');
-    return `<div class="lvl"><b>${esc(n)}</b><div class="chipbox" data-name="base_lv${i}"><div class="chips">${chips}</div><div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button></div></div></div>`;
+    return `<div class="lvl"><b>${esc(n)}</b><div class="chipbox" data-name="base_lv${i}"><div class="chips">${chips}</div><div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button>${vals.length>1?sortTools('lv'+i,'base_lv'+i):''}</div></div></div>`;
   }).join('');
   return `<details class="base" ${S.baseOpen?'open':''}><summary><span>Grundopsætning</span><span class="hint">${S.model.excluded ? nf(S.model.excluded)+' materialer fravalgt' : 'alt er med'}</span><span class="chev">${ICON.chev}</span></summary>
     <div class="body"><p class="muted small">Fravælg de steder, der aldrig skal med – fx et arkiv eller tomme filialer. Valget huskes i denne browser og gælder alle opgaver.</p><div class="levelgrid">${parts}</div></div></details>`;
@@ -773,13 +780,34 @@ function toolView(){
     <div class="tool"><div class="panel" id="panel">${panelView()}</div><div class="results" id="results">${resultsView()}</div></div></div>`;
 }
 
+const COL = new Intl.Collator('da', {numeric:true, sensitivity:'base'});
+const ABC_FIRST = new Set(['Delopstilling','Mat. type']);
+function sortKey(name){ return 'sort:'+name; }
+function chipSort(field, name){
+  const saved = S.chipSort[name];
+  if (saved) return saved;
+  const label = (S.model.fields[field]||{}).label || '';
+  return { mode: ABC_FIRST.has(label) ? 'abc' : 'antal', dir: 1 };
+}
+function sortVals(field, name, vals){
+  const c = chipSort(field, name); const out = vals.slice();
+  out.sort(c.mode==='abc'
+    ? (a,b)=> COL.compare(disp(a[0]), disp(b[0]))
+    : (a,b)=> b[1]-a[1] || COL.compare(disp(a[0]), disp(b[0])));
+  if (c.dir < 0) out.reverse();
+  return out;
+}
+function sortTools(field, name){
+  const c = chipSort(field, name);
+  return `<span class="sorttools"><button data-act="sortmode" data-n="${esc(name)}" data-f="${esc(field)}" title="Skift mellem alfabetisk og efter antal">${c.mode==='abc'?'A–Å':'Antal'}</button><button data-act="sortdir" data-n="${esc(name)}" data-f="${esc(field)}" title="Vend rækkefølgen om">${c.dir>0?'↓':'↑'}</button></span>`;
+}
 function chipList(field, selected, name, opts={}){
-  const vals = S.model.fields[field].values; const sel = new Set(selected||[]);
-  const many = vals.length > 40; const col = !!opts.collapsible;
+  const vals = sortVals(field, name, S.model.fields[field].values); const sel = new Set(selected||[]);
+  const many = vals.length > 40; const col = !!opts.collapsible && !S.chipOpen.has(name);
   const chips = vals.map(([v,n]) => `<label class="chip ${sel.has(v)?'on':''} ${col&&!sel.has(v)?'hid':''}" data-v="${esc(v)}"><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.has(v)?'checked':''}> ${esc(disp(v))} <span class="n">${nf(n)}</span></label>`).join('');
   const unit = opts.unit || 'værdier';
   return `<div class="chipbox ${col?'collapsed':''}" data-name="${name}">${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
-    <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${col?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${opts.expandLabel || `Vis alle ${vals.length} ${unit}`}</button>`:''}</div>`;
+    <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${vals.length>1?sortTools(field,name):''}${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${opts.collapsible?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${col?(opts.expandLabel || `Vis alle ${vals.length} ${unit}`):'Skjul'}</button>`:''}</div>`;
 }
 function levelChecks(sel){
   const m=S.model; const s=new Set(sel||[]);
@@ -1015,7 +1043,12 @@ function onClick(e){
     else anchor.insertAdjacentElement('afterend', d);
     b.classList.add('on');
     return; }
-  if (act==='togglechips'){ e.preventDefault(); const box=b.closest('.chipbox'); const collapse = !box.classList.contains('collapsed'); b.textContent = collapse ? b.dataset.open : 'Skjul'; if (collapse){ box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('hid', !c.querySelector('input').checked)); const any=[...box.querySelectorAll('.chip input')].some(i=>i.checked); const alle=box.querySelector('.chips .when-closed'); if (alle) alle.style.display = any?'none':''; } box.classList.toggle('collapsed', collapse); return; }
+  if (act==='sortmode'||act==='sortdir'){ e.preventDefault(); const n=b.dataset.n, f=b.dataset.f; const c={...chipSort(f,n)};
+    if (act==='sortmode') c.mode = c.mode==='abc' ? 'antal' : 'abc'; else c.dir = -c.dir;
+    S.chipSort[n]=c; const all=load('chipsort',{}); all[n]=c; store('chipsort',all);
+    if (n.startsWith('base_')){ S.baseOpen=true; render(); } else { readPanel(); rerenderPanel(); }
+    return; }
+  if (act==='togglechips'){ e.preventDefault(); const box=b.closest('.chipbox'); const collapse = !box.classList.contains('collapsed'); const nm=box.dataset.name; if (collapse) S.chipOpen.delete(nm); else S.chipOpen.add(nm); b.textContent = collapse ? b.dataset.open : 'Skjul'; if (collapse){ box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('hid', !c.querySelector('input').checked)); const any=[...box.querySelectorAll('.chip input')].some(i=>i.checked); const alle=box.querySelector('.chips .when-closed'); if (alle) alle.style.display = any?'none':''; } box.classList.toggle('collapsed', collapse); return; }
   if (act==='allchips'||act==='nochips'){ e.preventDefault(); const box=b.closest('.chipbox'); box.querySelectorAll('input[type=checkbox]').forEach(i=>{ if (i.closest('.chip').style.display!=='none'){ i.checked = act==='allchips'; i.closest('.chip').classList.toggle('on', i.checked); } }); if ((box.dataset.name||'').startsWith('base_lv')) onBaseChange(); return; }
   if (act==='savepreset'){ const f=document.querySelector('.saveform'); const sel=document.querySelector('select[name="preset"]'); const mine=load('presets',[]).filter(p=>p.fn===S.fn); const cur = sel.value ? mine[+sel.value] : null; f.querySelector('input[name="presetName"]').value = cur ? cur.name : ''; f.querySelector('input[name="presetFav"]').checked = !!(cur && cur.fav); f.querySelector('input[name="presetFav"]').closest('.chip').classList.toggle('on', !!(cur&&cur.fav)); f.classList.remove('hidden'); f.querySelector('input[name="presetName"]').focus(); return; }
   if (act==='savecancel'){ document.querySelector('.saveform').classList.add('hidden'); return; }
