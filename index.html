@@ -350,7 +350,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.8.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.8.2 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -384,9 +384,11 @@ details.base .body > p{margin:12px 0 14px}
    1.8.0  hver liste af valgmuligheder kan sorteres alfabetisk eller efter antal og vendes om;
           delopstilling og mat. type står alfabetisk som udgangspunkt, resten efter antal
    1.8.1  sorteringsknapperne står øverst i listen i stedet for nederst
+   1.8.2  kun tekst: "og hører også til her" hedder nu "og har også et eksemplar her", og
+          hjælpen forklarer forskellen på de to steder og på de to sammenlignende funktioner
    =================================================================== */
 
-const VERSION = '1.8.1';
+const VERSION = '1.8.2';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -587,7 +589,9 @@ const FUNCTIONS = {
     howto:[
       ['Bøger, der bør op fra magasinet','Sæt det første sted til magasinet og det andet til udlånet. Så får du titler, hvor det eneste hjemmeværende eksemplar står på magasinet, selvom bogen også hører til på hylden. Dem kan du hente op.'],
       ['Hvorfor det andet sted?','Uden det får du også bøger, I kun har på magasin. Dem er der som regel ingen grund til at gøre noget ved.'],
-      ['Én filial frem for en anden','De to steder behøver ikke være magasin og udlån. Sæt dem til to filialer, og du får titler, der lige nu kun er hjemme på den ene.']
+      ['Én filial frem for en anden','De to steder behøver ikke være magasin og udlån. Sæt dem til to filialer, og du får titler, der lige nu kun er hjemme på den ene.'],
+      ['Forskellen på de to steder','Det øverste sted er dét, du vil finde bøger på: der skal stå mindst ét eksemplar, som er hjemme – og der må ikke være et hjemme nogen andre steder i samlingen. Det nederste sted er en si: titlen skal desuden have et eksemplar registreret dér, og om det står på hylden eller er udlånt, er lige meget.'],
+      ['Forskellen på denne og "Hjemme her, og også dér"','Den anden funktion finder bøger, der står hjemme to steder på én gang. Denne finder bøger, hvor ét sted er det eneste sted, de er hjemme. Den ene leder efter et sammenfald, den anden efter et fravær.']
     ],
     defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
@@ -771,7 +775,8 @@ const HELP = {
   count:'Skal eksemplarerne stå samme sted for at tælle sammen? Krydser du Opstilling og Delopstilling af, tæller kun bøger, der står side om side på samme hylde. Lader du alt stå tomt, tælles hele samlingen under ét – tre bøger fordelt på tre filialer bliver da til "3".',
   forf:'To forskellige bøger kan hedde det samme. Med fluebenet sat tælles "Bjørnen" af Gard Sveen og "Bjørnen" af Katrine Marie Guldager hver for sig. Fjern det kun, hvis forfatterfeltet er tomt i jeres data.',
   sideA:'Vælg først hvilken slags sted du peger på – fx Opstilling – og derefter hvilke af dem, det gælder. Du kan vælge flere.',
-  sideB:'Det andet sted, der sammenlignes med. Samme fremgangsmåde som ovenfor.',
+  sideB:'Det andet sted, der sammenlignes med. Vælg først hvilken slags sted, derefter hvilke af dem.',
+  sideB_ikke:'Bruges til at sortere fra: titlen skal have mindst ét eksemplar registreret dette sted, hjemme eller udlånt – det er lige meget hvilket. Sæt den til udlånet, så du kun får bøger, der også står på hylden til daglig.',
   exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
   places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
   filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde.',
@@ -828,7 +833,8 @@ function fieldSelect(name, cur){
   return `<select name="${name}"><option value="">Vælg felt…</option>${opts.map(([v,l])=>`<option value="${v}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
 }
 function sideView(key, label, side, optional){
-  return `<div class="side" data-side="${key}"><div class="lbl">${label}${optional?'<span class="opt">valgfri</span>':''}</div>
+  const hk = key==='B' ? (S.fn==='ikke' ? 'sideB_ikke' : 'sideB') : 'sideA';
+  return `<div class="side" data-side="${key}"><div class="lbl"><span class="lbl2">${label} ${helpBtn(hk)}</span>${optional?'<span class="opt">valgfri</span>':''}</div>
     <div class="fieldrow">${fieldSelect(key+'_field', side.field)}</div>
     ${side.field ? chipList(side.field, side.values, key+'_val') : ''}</div>`;
 }
@@ -870,7 +876,7 @@ function panelView(){
     body += `<div class="sec"><h3><span class="lbl2">Hjemme betyder ${helpBtn('status')}</span><span class="hint">status</span></h3><div class="body">${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
     body += `<div class="sec"><h3><span class="lbl2">${fn==='ogsaa'?'Steder':'Sted'} ${helpBtn('sideA')}</span></h3><div class="body">
       ${sideView('A', fn==='ogsaa'?'Hjemme her':'Hjemme her, og kun her', s.sideA, false)}
-      ${sideView('B', fn==='ogsaa'?'og også hjemme her':'og hører også til her', s.sideB, fn==='ikke')}
+      ${sideView('B', fn==='ogsaa'?'og også hjemme her':'og har også et eksemplar her', s.sideB, fn==='ikke')}
       <div class="radio"><span class="muted small">Eksportér: ${helpBtn('exportWhat')}</span>
         <label><input type="radio" name="exportWhat" value="A" ${s.exportWhat!=='AB'?'checked':''}> kun fra det første sted</label>
         <label><input type="radio" name="exportWhat" value="AB" ${s.exportWhat==='AB'?'checked':''}> ${fn==='ogsaa'?'fra begge steder':'alle eksemplarer'}</label></div></div></div>`;
