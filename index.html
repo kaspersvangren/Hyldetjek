@@ -326,7 +326,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.6.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.6.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -353,9 +353,11 @@ details.base .body > p{margin:12px 0 14px}
           (H.C. Andersens Eventyr), ikke kun oversætter. Kun rene udgave-led fjernes
    1.6.0  forfatteren står først på egen linje i resultatet og på hyldelisten; hyldelisten har
           en kolonne der viser hvor mange af titlen der er talt med, og hvor resten står
+   1.6.1  mærkatet hedder "N titelvarianter" i stedet for "N udgaver" – tallet er antallet af
+          forskellige titelstrenge, ikke et sikkert antal udgaver
    =================================================================== */
 
-const VERSION = '1.6.0';
+const VERSION = '1.6.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -877,7 +879,7 @@ function groupView(g){
       <button class="tog" aria-label="Fold ud">${ICON.chev}</button>
       <input type="checkbox" data-grp="${esc(g.k)}" ${nSel===g.exp.length?'checked':''} aria-label="Vælg alle i gruppen">
       <div class="main">${f.forf?`<span class="aut">${esc(f.forf)}</span>`:''}<span class="ttl">${esc(multi ? f.stem : f.titel)}</span>
-        <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} udgaver</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
+        <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} titelvarianter</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
       <div class="cnt">${g.hits.length}<small>${nSel} valgt</small></div></div>
     <div class="items"><div class="tblwrap"><table><thead><tr><th></th><th>Titel</th><th>Placering</th><th>Status</th><th>Gruppe</th><th>Materialenr.</th></tr></thead><tbody>${items}</tbody></table></div></div></div>`;
 }
