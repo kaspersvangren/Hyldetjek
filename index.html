@@ -324,7 +324,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.4.2 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.5.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -344,9 +344,14 @@ details.base .body > p{margin:12px 0 14px}
    1.4.1  overskriften "Tæl inden for samme…" i ét stykke
    1.4.2  dobbelte materialenumre: rækken uden "Hjemme" beholdes; klarere besked; knap til at
           hente numrene som CSV
+   1.5.0  ny titelnøgle: undertitler beholdes, medmindre de er genre ("roman", "krimi"…),
+          format ("mp3", storskriftserie), oversætter/udgave ("Ved …", "Ill. …") eller
+          bindangivelse. "PS: jeg elsker dig" og "PS: Jeg elsker dig for evigt" er nu to titler
+   1.5.1  "Ved …" og "Ill. …" beholdes i titlen igen – de kan betyde forskellige udvalg
+          (H.C. Andersens Eventyr), ikke kun oversætter. Kun rene udgave-led fjernes
    =================================================================== */
 
-const VERSION = '1.4.2';
+const VERSION = '1.5.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -376,34 +381,44 @@ function autoMap(headers){
 function norm(s){ return String(s||'').normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim(); }
 function titleCase0(s){ return String(s||'').trim(); }
 
-// Finder bindangivelser i hele titlen, uanset notation:
-// "Bind 3", "1. bind", "[Bind] 1", "[7. bind]", "5. bog", "2. [bog]", "Del 2", "1. del", "Bog 2", "1. bind, del 1", "nr. 4"
-const VOL_WORDS = '(?:bind|bd|bog|del|vol|volume|part|book|nr|no)';
+// Titelnøgle: stamme + de undertitler, der ikke er genre/format/udgave/bind. "Ved …"/"Ill. …" beholdes (kan være forskellige udvalg). Bindnumre trækkes ud uanset notation.
+const VOL_WORDS = '(?:bind|bd|bog|del|vol|volume|part|book|nr|no|sæson|season|disc|disk|hæfte)';
 const RE_NUM_WORD = new RegExp('\\[?\\s*(\\d{1,4})\\s*\\.?\\s*\\]?\\s*\\.?\\s*\\[?\\s*\\b' + VOL_WORDS + '\\b\\.?\\s*\\]?', 'gi');
 const RE_WORD_NUM = new RegExp('\\[?\\s*\\b' + VOL_WORDS + '\\b\\.?\\s*\\]?\\s*\\.?\\s*\\[?\\s*(\\d{1,4})\\s*\\]?', 'gi');
 const RE_YEAR = /\((\d{4})\b/;
-
+const RE_BARE_NUM = /^\[?\s*(\d{1,4})\s*\]?$/;
+// undertitler, der beskriver samme værk (genre, format, storskriftserie) – fjernes
+const GENERIC = new Set(['roman','romaner','en roman','krimi','en krimi','kriminalroman','en kriminalroman','spændingsroman','en spændingsroman','thriller','en thriller','krimithriller','psykologisk thriller','erindringsroman','kortroman','noveller','en novelle','novelle','novellesamling','digte','digtsamling','erindringer','biografi','en biografi','selvbiografi','fortællinger','fortælling','en fortælling','essays','essay','eventyr','skuespil','dagbog','breve','en kærlighedshistorie','en roman om en forbrydelse','en antologi','antologi','a novel','novel','stories','poems','a memoir','memoir','a thriller','mp3','lydbog','stor skrift','storskrift','magnaprintserien','magnumbøger','magnaprint','modtryks storskriftserie','storskriftserie','let læst','letlæst']);
+const RE_EDITION = /^(nyoversat udgave|moderne retskrivning|ny retskrivning|\d+\. (rev\.? )?(udg|udgave|oplag)\.?)$/i;
+function takeMarks(seg, marks, nums){
+  const found=[]; let m;
+  RE_NUM_WORD.lastIndex=0; while((m=RE_NUM_WORD.exec(seg))) found.push({i:m.index, e:m.index+m[0].length, txt:m[0], n:+m[1]});
+  RE_WORD_NUM.lastIndex=0; while((m=RE_WORD_NUM.exec(seg))){ const i=m.index, e=i+m[0].length; if (found.some(x=> i<x.e+1 && e>x.i)) continue; found.push({i, e, txt:m[0], n:+m[1]}); }
+  found.sort((a,b)=>a.i-b.i);
+  for (const x of found){ marks.push(x.txt.replace(/[\[\]]/g,'').trim()); nums.push(x.n); }
+  let rest = seg; for (const x of found.slice().reverse()) rest = rest.slice(0,x.i)+' '+rest.slice(x.e);
+  return rest.replace(/\(\s*\d{4}\s*,?\s*\)/,'').replace(/[\[\]]/g,'').replace(/^[\s,.;–-]+|[\s,.;–-]+$/g,'').replace(/\s+/g,' ');
+}
 function titleKey(title){
   const t = String(title||'').trim();
-  const stem = t.split(':')[0].trim();
-  const marks = []; const nums = [];
-  const seen = new Set();
-  let m;
-  RE_NUM_WORD.lastIndex = 0;
-  while ((m = RE_NUM_WORD.exec(t))){ const k = m.index; if (!seen.has(k)){ seen.add(k); marks.push({i:k, txt:m[0].trim(), n:+m[1]}); } }
-  RE_WORD_NUM.lastIndex = 0;
-  while ((m = RE_WORD_NUM.exec(t))){
-    // spring over hvis den overlapper et allerede fundet num-word
-    const k = m.index; const end = k + m[0].length;
-    if ([...marks].some(x => k < x.i + x.txt.length + 1 && end > x.i)) continue;
-    marks.push({i:k, txt:m[0].trim(), n:+m[1]});
+  const segs = t.split(':').map(s=>s.trim()).filter(Boolean);
+  if (!segs.length) return { key:'', stem:t, marks:[], nums:[], year:null };
+  const marks=[], nums=[]; const keep=[];
+  const first = takeMarks(segs[0], marks, nums) || segs[0];
+  for (const seg of segs.slice(1)){
+    const bare = RE_BARE_NUM.exec(seg); if (bare){ nums.push(+bare[1]); marks.push(bare[1]); continue; }
+    const before = marks.length;
+    const rest = takeMarks(seg, marks, nums);
+    if (!rest) continue;                                   // kun bindangivelse
+    if (marks.length > before){ keep.push(rest); continue; } // bind + tekst: behold teksten
+    const low = norm(seg);
+    if (GENERIC.has(low) || RE_EDITION.test(low)) continue;
+    keep.push(seg);
   }
-  marks.sort((a,b)=>a.i-b.i);
-  for (const x of marks) nums.push(x.n);
-  const y = RE_YEAR.exec(t);
-  const year = y ? +y[1] : null;
-  const key = norm(stem).replace(/[.,;!?]+$/,'') + (nums.length ? '#' + nums.join('.') : '') + (year ? '@' + year : '');
-  return { key, stem, marks: marks.map(x=>x.txt.replace(/[\[\]]/g,'').trim()), nums, year };
+  const y = RE_YEAR.exec(t); const year = y ? +y[1] : null;
+  const stem = [first, ...keep].join(': ');
+  const key = norm(stem).replace(/[.,;!?]+$/,'') + (nums.length ? '#'+nums.join('.') : '') + (year ? '@'+year : '');
+  return { key, stem, marks, nums, year };
 }
 
 /* ---------------- model ---------------- */
