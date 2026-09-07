@@ -255,8 +255,8 @@ details.base .body > p{margin:12px 0 14px}
 .grp.open .row .tog svg{transform:rotate(90deg)}
 .grp .row input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--green);cursor:pointer}
 .grp .main{min-width:0}
-.grp .main .ttl{font-weight:700}
-.grp .main .aut{color:var(--ink-2)}
+.grp .main .aut{font-weight:700; display:block; line-height:1.35}
+.grp .main .ttl{color:var(--ink-2); display:block; line-height:1.35}
 .grp .main .meta{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; font-size:.8rem}
 .badge{display:inline-flex; align-items:center; padding:1px 8px; border-radius:999px; background:var(--rule-2); color:var(--ink-2); white-space:nowrap}
 .badge.amber{background:var(--amber-2); color:var(--amber)}
@@ -312,6 +312,8 @@ details.base .body > p{margin:12px 0 14px}
   #print th{text-align:left; font-size:8.5pt; color:#444; font-weight:400; border-bottom:1px solid #999; padding:2pt 4pt}
   #print td{padding:3pt 4pt; border-bottom:1px solid #ddd; vertical-align:top}
   #print td.nr{white-space:nowrap; font-variant-numeric:tabular-nums}
+  #print td.ctx{font-size:9pt; color:#444}
+  #print td b{font-weight:700}
   #print td.bx{width:14pt}
   #print td.bx span{display:inline-block; width:9pt; height:9pt; border:1px solid #000}
   #print tr{break-inside:avoid}
@@ -324,7 +326,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.5.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.6.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -349,9 +351,11 @@ details.base .body > p{margin:12px 0 14px}
           bindangivelse. "PS: jeg elsker dig" og "PS: Jeg elsker dig for evigt" er nu to titler
    1.5.1  "Ved …" og "Ill. …" beholdes i titlen igen – de kan betyde forskellige udvalg
           (H.C. Andersens Eventyr), ikke kun oversætter. Kun rene udgave-led fjernes
+   1.6.0  forfatteren står først på egen linje i resultatet og på hyldelisten; hyldelisten har
+          en kolonne der viser hvor mange af titlen der er talt med, og hvor resten står
    =================================================================== */
 
-const VERSION = '1.5.1';
+const VERSION = '1.6.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -872,7 +876,7 @@ function groupView(g){
   return `<div class="grp ${open?'open':''}" data-k="${esc(g.k)}"><div class="row" data-act="toggle">
       <button class="tog" aria-label="Fold ud">${ICON.chev}</button>
       <input type="checkbox" data-grp="${esc(g.k)}" ${nSel===g.exp.length?'checked':''} aria-label="Vælg alle i gruppen">
-      <div class="main"><span class="ttl">${esc(multi ? f.stem : f.titel)}</span> <span class="aut">${f.forf?'– '+esc(f.forf):''}</span>
+      <div class="main">${f.forf?`<span class="aut">${esc(f.forf)}</span>`:''}<span class="ttl">${esc(multi ? f.stem : f.titel)}</span>
         <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} udgaver</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
       <div class="cnt">${g.hits.length}<small>${nSel} valgt</small></div></div>
     <div class="items"><div class="tblwrap"><table><thead><tr><th></th><th>Titel</th><th>Placering</th><th>Status</th><th>Gruppe</th><th>Materialenr.</th></tr></thead><tbody>${items}</tbody></table></div></div></div>`;
@@ -903,6 +907,22 @@ function exportCsv(){
 }
 function printList(){
   const items = checkedItems(); const c = new Intl.Collator('da');
+  const ctx = new Map();
+  for (const g of S.results){
+    const chosen = g.exp.filter(x=>S.checked.has(x.id)); if (!chosen.length) continue;
+    const placeOf = x => x.lv.filter(Boolean).join(' / ') || '(ingen placering)';
+    for (const x of chosen){
+      const here = g.hits.filter(y=>placeOf(y)===placeOf(x)).length;
+      const others = new Map();
+      for (const y of g.hits){
+        if (placeOf(y)===placeOf(x)) continue;
+        const diff = y.lv.filter((v,i)=> v && v!==x.lv[i]).join(' / ') || placeOf(y);
+        others.set(diff, (others.get(diff)||0)+1);
+      }
+      const rest = [...others.entries()].map(([p,n])=>`${n} i ${p}`).join(', ');
+      ctx.set(x.id, `${here} af ${g.hits.length}${rest?' · '+rest:''}`);
+    }
+  }
   items.sort((a,b)=> c.compare(a.plac,b.plac) || c.compare(a.forf||'\uffff', b.forf||'\uffff') || c.compare(a.stem,b.stem) || c.compare(a.titel,b.titel));
   const s = curSettings(); const f = FUNCTIONS[S.fn];
   let meta = `${new Date().toLocaleDateString('da-DK')} · ${esc(S.fileName)} · ${nf(items.length)} eksemplarer`;
@@ -911,8 +931,8 @@ function printList(){
   let cur = null;
   for (const x of items){
     const p = x.lv.filter(Boolean).join(' / ') || '(ingen placering)';
-    if (p !== cur){ if (cur!==null) html += '</tbody></table>'; cur = p; html += `<h2>${esc(p)}</h2><table><thead><tr><th></th><th>Forfatter</th><th>Titel</th><th>Status</th><th>Materialenr.</th></tr></thead><tbody>`; }
-    html += `<tr><td class="bx"><span></span></td><td>${esc(x.forf)}</td><td>${esc(x.titel)}</td><td>${esc(x.status)}</td><td class="nr">${esc(x.nr)}</td></tr>`;
+    if (p !== cur){ if (cur!==null) html += '</tbody></table>'; cur = p; html += `<h2>${esc(p)}</h2><table><thead><tr><th></th><th>Forfatter og titel</th><th>Hele titlen</th><th>Status</th><th>Materialenr.</th></tr></thead><tbody>`; }
+    html += `<tr><td class="bx"><span></span></td><td>${x.forf?`<b>${esc(x.forf)}</b><br>`:''}${esc(x.titel)}</td><td class="ctx">${esc(ctx.get(x.id)||'')}</td><td>${esc(x.status)}</td><td class="nr">${esc(x.nr)}</td></tr>`;
   }
   if (cur!==null) html += '</tbody></table>';
   document.getElementById('print').innerHTML = html;
