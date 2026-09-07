@@ -159,6 +159,15 @@ p{margin:0}
 .toolhead .back:hover{color:var(--green)}
 .toolhead .back svg{width:16px;height:16px}
 .toolhead .explain{color:var(--ink-2); max-width:60ch; margin-top:4px}
+details.howto{margin-top:14px; max-width:68ch; border:1px solid var(--rule); border-radius:var(--radius); background:var(--card)}
+details.howto summary{list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; font-weight:700; font-size:.925rem}
+details.howto summary::-webkit-details-marker{display:none}
+details.howto summary .chev{color:var(--ink-3); transition:transform .15s; display:flex}
+details.howto summary .chev svg{width:16px;height:16px}
+details.howto[open] summary .chev{transform:rotate(90deg)}
+details.howto dl{margin:0; padding:2px 16px 16px; border-top:1px solid var(--rule-2)}
+details.howto dt{font-weight:700; font-size:.9rem; margin-top:12px}
+details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 
 .tool{display:grid; grid-template-columns:340px minmax(0,1fr); gap:28px; align-items:start; padding-bottom:64px}
 @media (max-width:860px){.tool{grid-template-columns:1fr}}
@@ -168,6 +177,11 @@ p{margin:0}
 .panel .sec:last-child{border-bottom:0}
 .panel .sec h3{display:flex; align-items:center; justify-content:space-between; font-size:.95rem}
 .panel .sec h3 .hint{font-weight:400; color:var(--ink-3); font-size:.8rem}
+.panel .sec h3 .lbl2{display:flex; align-items:center; gap:7px}
+.help{width:18px; height:18px; flex:none; border-radius:50%; border:1px solid var(--rule); background:var(--card); color:var(--ink-3); font-size:.72rem; font-weight:700; line-height:1; cursor:pointer; padding:0; display:inline-grid; place-items:center}
+.help:hover, .help.on{border-color:var(--green); color:var(--green); background:var(--green-2)}
+.helptext{margin:10px 0 0; padding:10px 12px; border-left:3px solid var(--green); background:var(--green-2); color:var(--ink); border-radius:0 var(--radius-s) var(--radius-s) 0; font-size:.875rem; line-height:1.45}
+.side .lbl{align-items:center}
 .panel .sec .body{margin-top:10px}
 .panel details.sec summary{cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:.95rem}
 .panel details.sec summary::-webkit-details-marker{display:none}
@@ -326,7 +340,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.6.1 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.7.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -355,9 +369,11 @@ details.base .body > p{margin:12px 0 14px}
           en kolonne der viser hvor mange af titlen der er talt med, og hvor resten står
    1.6.1  mærkatet hedder "N titelvarianter" i stedet for "N udgaver" – tallet er antallet af
           forskellige titelstrenge, ikke et sikkert antal udgaver
+   1.7.0  hjælp overalt: hver funktion har en konkret beskrivelse og et "Sådan bruger du den"-
+          afsnit med eksempler; hvert felt i panelet har et spørgsmålstegn med forklaring
    =================================================================== */
 
-const VERSION = '1.6.1';
+const VERSION = '1.7.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -507,8 +523,13 @@ function sideDefined(side){ return !!(side && side.field && side.values && side.
 const FUNCTIONS = {
   flere: {
     title:'Flere eksemplarer',
-    short:'Titler med mindst et bestemt antal hjemme. Til udstillingsstakke, tripletter og dubletter.',
-    explain:'Finder titler, hvor mindst det valgte antal eksemplarer har en af de valgte statusser. Vælg om der tælles på tværs af hele samlingen eller inden for én placering.',
+    short:'Har vi tre af den samme bog stående? Til tripletter, dubletter og udstillingsstakke.',
+    explain:'Du vælger et antal, og får de titler, I har mindst så mange af stående hjemme lige nu.',
+    howto:[
+      ['Tripletter på én hylde','Sæt antallet til 3 og kryds "Opstilling" og "Delopstilling" af under Tæl inden for samme. Så tælles kun eksemplarer, der står side om side, og du får de titler, der fylder tre pladser på samme hylde.'],
+      ['Dubletter','Det samme, men med antallet sat til 2. Bruges typisk kun, når der er pres på pladsen.'],
+      ['Bøger nok til en stak på udstillingen','Sæt antallet til 4 og lad Tæl inden for samme stå tom. Så tælles på tværs af hele samlingen — også magasinet — og du kan se, hvor der er nok eksemplarer til at lave en stak.']
+    ],
     defaults:(model)=>({ min:3, statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       const base = applyFilters(model.recs, s.filters);
@@ -523,8 +544,12 @@ const FUNCTIONS = {
   },
   ogsaa: {
     title:'Hjemme her, og også dér',
-    short:'Titler der står hjemme to steder på én gang. Til kvik-hylden.',
-    explain:'Finder titler, hvor mindst ét eksemplar er hjemme i det første sted og mindst ét er hjemme i det andet. Eksporterer som udgangspunkt kun eksemplarerne fra det første sted.',
+    short:'Står den samme bog hjemme to steder på én gang? Til kvik-hylden.',
+    explain:'Du peger på to steder, og får de titler, der står hjemme begge steder samtidig.',
+    howto:[
+      ['Ryd op på kvik-hylden','Sæt det første sted til kvik-hylden og det andet til den almindelige hylde. Så finder den de kvik-bøger, man alligevel kan låne med hjem på normale vilkår — dem kan du tage af kvik-hylden, så den bliver et sted, hvor man gør et kup.'],
+      ['Hvad skal vi eksportere?','Lad "kun fra det første sted" stå. Så får du numrene på kvik-eksemplarerne — dem, du skal gøre noget ved — og ikke bøgerne på den almindelige hylde.']
+    ],
     defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       if (!sideDefined(s.sideA) || !sideDefined(s.sideB)) return { error:'Vælg begge steder.' };
@@ -544,8 +569,13 @@ const FUNCTIONS = {
   },
   ikke: {
     title:'Hjemme her, men ikke dér',
-    short:'Titler der kun står hjemme ét sted. Til magasinet.',
-    explain:'Finder titler, hvor mindst ét eksemplar er hjemme i det valgte sted, og ingen eksemplarer er hjemme andre steder. Kan afgrænses til titler, som også hører til et bestemt andet sted.',
+    short:'Er den eneste bog hjemme nede på magasinet? Til at hente bøger op på hylden.',
+    explain:'Du peger på ét sted, og får de titler, der lige nu kun er hjemme dér — alle andre eksemplarer er udlånt eller står slet ikke der.',
+    howto:[
+      ['Bøger, der bør op fra magasinet','Sæt det første sted til magasinet og det andet til udlånet. Så får du titler, hvor det eneste hjemmeværende eksemplar står på magasinet, selvom bogen også hører til på hylden. Dem kan du hente op.'],
+      ['Hvorfor det andet sted?','Uden det får du også bøger, I kun har på magasin. Dem er der som regel ingen grund til at gøre noget ved.'],
+      ['Én filial frem for en anden','De to steder behøver ikke være magasin og udlån. Sæt dem til to filialer, og du får titler, der lige nu kun er hjemme på den ene.']
+    ],
     defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       if (!sideDefined(s.sideA)) return { error:'Vælg stedet, der skal være hjemme.' };
@@ -721,11 +751,25 @@ function mappingView(){
 }
 
 /* ---------- tool ---------- */
+const HELP = {
+  status:'Cicero har mange statusser, men kun "Hjemme" betyder, at bogen faktisk står på hylden. De øvrige – udlånt, i transit, bortkommet – er som regel ikke med. Vil du fx også tælle bøger, der er på vej hjem, kan du krydse dem af her.',
+  min:'Hvor mange eksemplarer skal der mindst være, før titlen kommer med? 2 finder dubletter, 3 tripletter, 4 er nok til en stak på en udstilling.',
+  count:'Skal eksemplarerne stå samme sted for at tælle sammen? Krydser du Opstilling og Delopstilling af, tæller kun bøger, der står side om side på samme hylde. Lader du alt stå tomt, tælles hele samlingen under ét – tre bøger fordelt på tre filialer bliver da til "3".',
+  forf:'To forskellige bøger kan hedde det samme. Med fluebenet sat tælles "Bjørnen" af Gard Sveen og "Bjørnen" af Katrine Marie Guldager hver for sig. Fjern det kun, hvis forfatterfeltet er tomt i jeres data.',
+  sideA:'Vælg først hvilken slags sted du peger på – fx Opstilling – og derefter hvilke af dem, det gælder. Du kan vælge flere.',
+  sideB:'Det andet sted, der sammenlignes med. Samme fremgangsmåde som ovenfor.',
+  exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
+  places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
+  filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde.',
+  presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
+};
+function helpBtn(k){ return `<button class="help" data-act="help" data-k="${k}" aria-label="Hjælp" title="Hvad betyder det?">?</button>`; }
 function curSettings(){ return S.settings[S.fn]; }
 function toolView(){
   const f = FUNCTIONS[S.fn];
   return `<div class="wrap">${topBar()}
-    <div class="toolhead"><div><button class="back" data-act="home">${ICON.back} Alle opgaver</button><h1>${esc(f.title)}</h1><p class="explain">${esc(f.explain)}</p></div></div>
+    <div class="toolhead"><div><button class="back" data-act="home">${ICON.back} Alle opgaver</button><h1>${esc(f.title)}</h1><p class="explain">${esc(f.explain)}</p>
+      ${f.howto?`<details class="howto"><summary><span>Sådan bruger du den</span><span class="chev">${ICON.chev}</span></summary><dl>${f.howto.map(([t,d])=>`<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('')}</dl></details>`:''}</div></div>
     <div class="tool"><div class="panel" id="panel">${panelView()}</div><div class="results" id="results">${resultsView()}</div></div></div>`;
 }
 
@@ -759,7 +803,7 @@ function placeView(fl){
   const m=S.model; const parts=[];
   m.levelNames.forEach((n,i)=>{ const vals=m.fields['lv'+i].values; if (vals.length===1 && vals[0][0]==='') return;
     parts.push(`<div class="lvlrow"><b>${esc(n)}</b>${chipList('lv'+i, fl['lv'+i], 'f_lv'+i, {collapsible:true, unit:LEVEL_UNIT(n), expandLabel:'Vælg', showAll:false})}</div>`); });
-  return `<div class="sec places"><h3>Søg i <span class="hint">intet valgt = alle</span></h3><div class="body">${parts.join('')}</div></div>`;
+  return `<div class="sec places"><h3><span class="lbl2">Søg i ${helpBtn('places')}</span><span class="hint">intet valgt = alle</span></h3><div class="body">${parts.join('')}</div></div>`;
 }
 function filtersView(fl){
   const m=S.model; const parts=[];
@@ -768,13 +812,13 @@ function filtersView(fl){
   if (m.fields.gruppe.values.length>1) parts.push(`<div class="lvl"><b>Materialegruppe</b>${chipList('gruppe', fl.gruppe, 'f_gruppe')}</div>`);
   const kl = fl.klass||{mode:'is',text:''};
   parts.push(`<div class="lvl"><b>Klassifikation</b><div class="fieldrow"><select name="f_klass_mode"><option value="is" ${kl.mode==='is'?'selected':''}>er præcis</option><option value="starts" ${kl.mode==='starts'?'selected':''}>begynder med</option><option value="contains" ${kl.mode==='contains'?'selected':''}>indeholder</option></select><input type="text" name="f_klass_text" value="${esc(kl.text)}" placeholder="fx sk eller 64" style="flex:1;min-width:90px"></div></div>`);
-  return `<details class="sec"><summary><span>Afgræns materialerne</span><span style="display:flex;align-items:center;gap:10px">${cnt?`<span class="cnt">${cnt} ${cnt===1?'aktiv':'aktive'}</span>`:''}<span class="chev">${ICON.chev}</span></span></summary>
+  return `<details class="sec"><summary><span class="lbl2">Afgræns materialerne ${helpBtn('filters')}</span><span style="display:flex;align-items:center;gap:10px">${cnt?`<span class="cnt">${cnt} ${cnt===1?'aktiv':'aktive'}</span>`:''}<span class="chev">${ICON.chev}</span></span></summary>
     <div class="body levelgrid">${parts.join('')}</div></details>`;
 }
 function presetsView(){
   const all = load('presets',[]).filter(p=>p.fn===S.fn);
   const cur = S.presetName || '';
-  return `<div class="sec"><div class="presets"><select name="preset"><option value="">Gemte indstillinger…</option>${all.map((p,i)=>`<option value="${i}" ${p.name===cur?'selected':''}>${p.fav?'★ ':''}${esc(p.name)}</option>`).join('')}</select>
+  return `<div class="sec"><h3><span class="lbl2">Gemte opsætninger ${helpBtn('presets')}</span></h3><div class="presets" style="margin-top:10px"><select name="preset"><option value="">Gemte indstillinger…</option>${all.map((p,i)=>`<option value="${i}" ${p.name===cur?'selected':''}>${p.fav?'★ ':''}${esc(p.name)}</option>`).join('')}</select>
     <button class="btn" data-act="savepreset" title="Gem de nuværende indstillinger under et navn">Gem</button>
     <button class="btn" data-act="delpreset" title="Slet den valgte">Slet</button>
     <button class="btn" data-act="exportpresets" title="Hent alle gemte indstillinger som en fil, du kan dele">Del</button>
@@ -786,19 +830,19 @@ function panelView(){
   const s = curSettings(); const m = S.model; const fn = S.fn;
   let body = presetsView();
   if (fn==='flere'){
-    body += `<div class="sec"><h3>Mindst hvor mange eksemplarer?</h3><div class="body"><div class="fieldrow"><input type="number" name="min" min="2" max="99" value="${s.min}"><label>eksemplarer, der er</label></div>${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
+    body += `<div class="sec"><h3><span class="lbl2">Mindst hvor mange eksemplarer? ${helpBtn('min')}</span></h3><div class="body"><div class="fieldrow"><input type="number" name="min" min="2" max="99" value="${s.min}"><label>eksemplarer, der er</label></div>${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
   } else {
-    body += `<div class="sec"><h3>Hjemme betyder <span class="hint">status</span></h3><div class="body">${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
-    body += `<div class="sec"><h3>${fn==='ogsaa'?'Steder':'Sted'}</h3><div class="body">
+    body += `<div class="sec"><h3><span class="lbl2">Hjemme betyder ${helpBtn('status')}</span><span class="hint">status</span></h3><div class="body">${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
+    body += `<div class="sec"><h3><span class="lbl2">${fn==='ogsaa'?'Steder':'Sted'} ${helpBtn('sideA')}</span></h3><div class="body">
       ${sideView('A', fn==='ogsaa'?'Hjemme her':'Hjemme her, og kun her', s.sideA, false)}
       ${sideView('B', fn==='ogsaa'?'og også hjemme her':'og hører også til her', s.sideB, fn==='ikke')}
-      <div class="radio"><span class="muted small">Eksportér:</span>
+      <div class="radio"><span class="muted small">Eksportér: ${helpBtn('exportWhat')}</span>
         <label><input type="radio" name="exportWhat" value="A" ${s.exportWhat!=='AB'?'checked':''}> kun fra det første sted</label>
         <label><input type="radio" name="exportWhat" value="AB" ${s.exportWhat==='AB'?'checked':''}> ${fn==='ogsaa'?'fra begge steder':'alle eksemplarer'}</label></div></div></div>`;
   }
-  body += `<div class="sec"><h3>Tæl inden for samme…</h3><div class="body"><div class="chips">${levelChecks(s.groupLevels)}</div>
+  body += `<div class="sec"><h3><span class="lbl2">Tæl inden for samme… ${helpBtn('count')}</span></h3><div class="body"><div class="chips">${levelChecks(s.groupLevels)}</div>
     <p class="muted small" style="margin-top:8px">Intet valgt: der tælles på tværs af hele samlingen.</p>
-    ${m.hasForf?`<label class="chip ${s.useForf!==false?'on':''}" style="margin-top:10px"><input type="checkbox" name="useForf" ${s.useForf!==false?'checked':''}> Skeln mellem forfattere med samme titel</label>`:''}</div></div>`;
+    ${m.hasForf?`<div style="display:flex; align-items:center; gap:7px; margin-top:10px"><label class="chip ${s.useForf!==false?'on':''}"><input type="checkbox" name="useForf" ${s.useForf!==false?'checked':''}> Skeln mellem forfattere med samme titel</label>${helpBtn('forf')}</div>`:''}</div></div>`;
   body += placeView(s.filters||{});
   body += filtersView(s.filters||{});
   body += `<div class="run"><button class="btn primary" data-act="run">Find</button><button class="btn quiet" data-act="reset" title="Sæt alle indstillinger tilbage til standard">Nulstil</button></div>`;
@@ -960,6 +1004,17 @@ function onClick(e){
   if (act==='open'){ S.fn=b.dataset.fn; S.view='tool'; S.results=null; S.error=''; S.presetName=''; S.settings[S.fn] = sanitize(load('last:'+S.fn,null), S.fn); { const d = FUNCTIONS[S.fn].defaults(S.model); if (d.statuses.length) S.settings[S.fn].statuses = d.statuses; } render(); window.scrollTo(0,0); return; }
   if (act==='applymap'){ const m={}; $app.querySelectorAll('select[data-role]').forEach(s=>{ if (s.value) m[s.dataset.role]=s.value; }); S.map=m; if (missingRoles().length){ toast('De fire første kolonner skal vælges'); return; } finishLoad(); return; }
   if (act==='run'){ run(); return; }
+  if (act==='help'){ e.preventDefault();
+    const k = b.dataset.k;
+    const existing = $app.querySelector(`.helptext[data-k="${k}"]`);
+    if (existing){ existing.remove(); b.classList.remove('on'); return; }
+    const sum = b.closest('summary');
+    const anchor = sum || b.closest('h3') || b.closest('.radio') || b.parentElement;
+    const d = document.createElement('p'); d.className='helptext'; d.dataset.k = k; d.textContent = HELP[k] || '';
+    if (sum){ sum.parentElement.open = true; (sum.nextElementSibling || sum.parentElement).insertAdjacentElement(sum.nextElementSibling?'beforebegin':'beforeend', d); }
+    else anchor.insertAdjacentElement('afterend', d);
+    b.classList.add('on');
+    return; }
   if (act==='togglechips'){ e.preventDefault(); const box=b.closest('.chipbox'); const collapse = !box.classList.contains('collapsed'); b.textContent = collapse ? b.dataset.open : 'Skjul'; if (collapse){ box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('hid', !c.querySelector('input').checked)); const any=[...box.querySelectorAll('.chip input')].some(i=>i.checked); const alle=box.querySelector('.chips .when-closed'); if (alle) alle.style.display = any?'none':''; } box.classList.toggle('collapsed', collapse); return; }
   if (act==='allchips'||act==='nochips'){ e.preventDefault(); const box=b.closest('.chipbox'); box.querySelectorAll('input[type=checkbox]').forEach(i=>{ if (i.closest('.chip').style.display!=='none'){ i.checked = act==='allchips'; i.closest('.chip').classList.toggle('on', i.checked); } }); if ((box.dataset.name||'').startsWith('base_lv')) onBaseChange(); return; }
   if (act==='savepreset'){ const f=document.querySelector('.saveform'); const sel=document.querySelector('select[name="preset"]'); const mine=load('presets',[]).filter(p=>p.fn===S.fn); const cur = sel.value ? mine[+sel.value] : null; f.querySelector('input[name="presetName"]').value = cur ? cur.name : ''; f.querySelector('input[name="presetFav"]').checked = !!(cur && cur.fav); f.querySelector('input[name="presetFav"]').closest('.chip').classList.toggle('on', !!(cur&&cur.fav)); f.classList.remove('hidden'); f.querySelector('input[name="presetName"]').focus(); return; }
