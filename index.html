@@ -352,7 +352,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.9.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.9.1 (8. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -394,9 +394,10 @@ details.base .body > p{margin:12px 0 14px}
           tegnet om (sortering, gemte opsætninger, valg af felt). Nu bevares både åbne afsnit,
           søgefelter i lange lister og rullepositionen
    1.9.0  klassifikation kan afgrænses til et interval, fx 64 til 64.12 eller 99.1 til 99.94
+   1.9.1  changelog.html i samme udseende som værktøjet, med hver udgave foldet sammen
    =================================================================== */
 
-const VERSION = '1.9.0';
+const VERSION = '1.9.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -755,7 +756,7 @@ function render(){ $app.innerHTML = S.view==='home' ? homeView() : toolView(); b
 
 function topBar(){
   const f = S.model ? `<div class="file"><span class="name" title="${esc(S.fileName)}">${S.fileCount>1?S.fileCount+' filer':esc(S.fileName)}</span><span>${nf(S.model.recs.length)} materialer</span><button class="btn quiet" data-act="addfiles">Tilføj filer</button></div>` : '';
-  return `<div class="top"><button class="brand" data-act="home" aria-label="Til forsiden">${ICON.logo}<b>Hyldetjek</b></button><a class="ver" href="changelog.md" title="Se hvad der er ændret i denne og tidligere versioner">${VERSION}</a>${f}<input type="file" id="fileInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
+  return `<div class="top"><button class="brand" data-act="home" aria-label="Til forsiden">${ICON.logo}<b>Hyldetjek</b></button><a class="ver" href="changelog.html" title="Se hvad der er ændret i denne og tidligere versioner">${VERSION}</a>${f}<input type="file" id="fileInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
 }
 
 function homeView(){

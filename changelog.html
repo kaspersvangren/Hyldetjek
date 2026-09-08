@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ændringer i Hyldetjek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --paper:#F6F7F4;
+  --card:#FFFFFF;
+  --ink:#1E2A36;
+  --ink-2:#4A5763;
+  --ink-3:#7C8792;
+  --rule:#D9DED8;
+  --rule-2:#EDEFEA;
+  --green:#2F6B4F;
+  --green-2:#E4F0EA;
+  --green-3:#1F4D38;
+  --amber:#B9861E;
+  --amber-2:#FBF1DC;
+  --red:#A63D2F;
+  --red-2:#F8E5E1;
+  --focus:#2F6B4F;
+  --radius:10px;
+  --radius-s:6px;
+  --shadow:0 1px 2px rgba(30,42,54,.06), 0 4px 16px rgba(30,42,54,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151A1F; --card:#1E252C; --ink:#EDEFEA; --ink-2:#B9C1C8; --ink-3:#7F8A94;
+    --rule:#334049; --rule-2:#28323A;
+    --green:#6FB58F; --green-2:#213A2E; --green-3:#9AD1B3;
+    --amber:#E0B25A; --amber-2:#3A3120;
+    --red:#E08B7D; --red-2:#402420;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+    --paper:#151A1F; --card:#1E252C; --ink:#EDEFEA; --ink-2:#B9C1C8; --ink-3:#7F8A94;
+    --rule:#334049; --rule-2:#28323A;
+    --green:#6FB58F; --green-2:#213A2E; --green-3:#9AD1B3;
+    --amber:#E0B25A; --amber-2:#3A3120;
+    --red:#E08B7D; --red-2:#402420;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+html{font-size:16px}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--green)}
+button{font:inherit; color:inherit}
+h1,h2,h3{margin:0; font-weight:700; line-height:1.2}
+h1{font-size:1.9rem; letter-spacing:-.01em}
+h2{font-size:1.25rem}
+h3{font-size:1rem}
+p{margin:0}
+.muted{color:var(--ink-2)}
+.small{font-size:.875rem}
+.hidden{display:none !important}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px; border-radius:4px}
+
+.wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;}
+.wrap{max-width:780px; margin:0 auto; padding:0 20px 72px}
+a{color:var(--green)}
+:focus-visible{outline:3px solid var(--green); outline-offset:2px; border-radius:4px}
+.top{display:flex; align-items:center; gap:10px; padding:18px 0 14px; border-bottom:1px solid var(--rule)}
+.top svg.logo{width:28px;height:28px;display:block}
+.top b{font-size:1.15rem; letter-spacing:-.01em}
+.top .back{margin-left:auto; font-size:.9rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px}
+.top .back svg{width:16px;height:16px}
+h1{font-size:1.8rem; margin:40px 0 8px; letter-spacing:-.01em; text-wrap:balance}
+.lead{color:var(--ink-2); margin:0 0 6px; max-width:62ch}
+.lead + .lead{margin-top:10px}
+.rels{margin-top:34px; border-top:1px solid var(--rule)}
+details.rel{border-bottom:1px solid var(--rule)}
+details.rel summary{list-style:none; cursor:pointer; display:grid; grid-template-columns:4.2em 1fr auto auto; gap:14px; align-items:baseline; padding:16px 6px}
+details.rel summary::-webkit-details-marker{display:none}
+details.rel summary:hover{background:var(--card)}
+details.rel .v{font-weight:700; font-variant-numeric:tabular-nums}
+details.rel .h{font-weight:700; color:var(--ink)}
+details.rel .d{color:var(--ink-3); font-size:.82rem; white-space:nowrap}
+details.rel .chev{color:var(--ink-3); transition:transform .15s; align-self:center; display:flex}
+details.rel .chev svg{width:16px;height:16px;display:block}
+details.rel[open] .chev{transform:rotate(90deg)}
+details.rel[open] summary{padding-bottom:6px}
+details.rel dl{margin:0; padding:0 6px 20px; }
+@media (min-width:620px){ details.rel dl{padding-left:calc(4.2em + 14px)} }
+details.rel dt{font-weight:700; font-size:.925rem; margin-top:14px}
+details.rel dd{margin:2px 0 0; color:var(--ink-2)}
+.note{margin-top:40px; padding:18px 20px; background:var(--card); border:1px solid var(--rule); border-radius:var(--radius)}
+.note h2{margin:0 0 8px; font-size:1.05rem}
+.note p{margin:0; color:var(--ink-2); font-size:.925rem}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+@media (max-width:619px){
+  details.rel summary{grid-template-columns:1fr auto; row-gap:2px}
+  details.rel .v{grid-column:1} details.rel .chev{grid-column:2; grid-row:1/3}
+  details.rel .h{grid-column:1; grid-row:2} details.rel .d{grid-column:1; grid-row:3}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <svg class="logo" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 23V6M10 23V9M16 23V5M22 23V11" stroke="var(--green)"/><path d="M2 24h24" stroke="var(--ink-3)"/></svg>
+    <b>Hyldetjek</b>
+    <a class="back" href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>Tilbage til værktøjet</a>
+  </div>
+
+  <h1>Ændringer i Hyldetjek</h1>
+  <p class="lead">Nyeste øverst. Versionsnummeret står øverst i værktøjet ved siden af navnet – klik på det for at komme herhen.</p>
+  <p class="lead">Numrene betyder: første tal ændrer sig, hvis værktøjet grundlæggende laves om. Andet tal er nye ting, man kan. Tredje tal er rettelser og sproglige ændringer.</p>
+
+  <div class="rels">
+  <details class="rel" open>
+    <summary>
+      <span class="v">1.9.0</span>
+      <span class="h">Klassifikation kan afgrænses til et interval</span>
+      <span class="d">8. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Interval på klassifikation</dt><dd>Ved siden af “er præcis”, “begynder med” og “indeholder” er der nu <b>mellem</b>, hvor du skriver fra og til – fx 64 til 64.12, eller 99.1 til 99.94.</dd>
+      <dt>Sådan læses klassemærket</dt><dd>Tallet forrest tæller, så “99.4 Ditlevsen, Tove” regnes som 99.4. Undergrupper kommer med i toppen af intervallet: slutter du ved 64.12, er 64.125 med. Klassemærker uden tal – “sk” for skønlitteratur – kan ikke ligge i et interval og kommer ikke med.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.8.4</span>
+      <span class="h">Panelet mister ikke længere sin tilstand</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Rettelse</dt><dd>Panelet foldede “Afgræns materialerne” sammen og sprang op i toppen af siden, hver gang det blev tegnet om. Det skete ved sortering, ved valg af en gemt opsætning, ved Gem og Nulstil og ved skift af felt under Sted. Nu bliver åbne afsnit, åbne hjælpetekster, indtastede søgeord og din plads på siden, hvor de var.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.8.3</span>
+      <span class="h">Vejledningerne er eksempler, ikke anvisninger</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Sprog</dt><dd>Afsnittet hedder nu “Eksempler på brug” og fortæller, hvad du får ud af en opsætning – ikke hvad du bør gøre bagefter. Værktøjet skal ikke antage, hvad du vil opnå.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.8.2</span>
+      <span class="h">Tydeligere navn på det andet sted</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Nyt navn</dt><dd>Feltet “og hører også til her” hedder nu <b>“og har også et eksemplar her”</b>. Det gamle navn lød, som om der blev tjekket, hvor bogen hører hjemme; der tjekkes kun, om der overhovedet står et eksemplar det sted – hjemme eller udlånt.</dd>
+      <dt>Mere hjælp</dt><dd>Begge steder-felter har fået en forklaring, og vejledningen beskriver forskellen på de to sammenlignende funktioner.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.8.1</span>
+      <span class="h">Sorteringsknapperne flyttet op</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Placering</dt><dd>Knapperne står nu over listen i stedet for under. Man skulle ellers scrolle forbi hele listen for at nå dem.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.8.0</span>
+      <span class="h">Listerne kan sorteres</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Sortering</dt><dd>Hver liste af valgmuligheder har to små knapper: alfabetisk eller efter antal, og en pil, der vender rækkefølgen om. Delopstilling og Mat. type står alfabetisk fra start, resten efter antal. Valget huskes pr. liste.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.7.0</span>
+      <span class="h">Hjælp overalt</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Beskrivelser</dt><dd>Hver funktion siger nu, hvad den finder, og har et foldbart afsnit med konkrete eksempler.</dd>
+      <dt>Spørgsmålstegn</dt><dd>Hvert felt i panelet har et spørgsmålstegn, der folder en forklaring ud.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.6.1</span>
+      <span class="h">“N titelvarianter” i stedet for “N udgaver”</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Ærligere mærkat</dt><dd>Tallet er antallet af forskellige titelstrenge i gruppen. Det er ikke et sikkert antal udgaver: tre udgaver med præcis samme titel kan ikke skelnes fra hinanden i eksporten. Til gengæld betyder to stavemåder altid mindst to bibliografiske poster.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.6.0</span>
+      <span class="h">Forfatteren først, og mere at gå ud med</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Forfatteren først</dt><dd>Forfatteren står i fed på egen linje med titlen under – både i resultatlisten og på hyldelisten. Det er som regel forfatteren, man leder efter ved hylden.</dd>
+      <dt>Ny kolonne på hyldelisten</dt><dd>“1 af 3 · 2 i Hovedbiblioteket” viser, hvor mange af titlen der er talt med, og hvor resten står. Så kan man tage stilling ved hylden uden at gå tilbage til skærmen.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.5.1</span>
+      <span class="h">“Ved …” og “Ill. …” bliver stående i titlen</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Hvorfor</dt><dd>De kan betyde forskellige udvalg og altså forskellige bøger. H.C. Andersens <i>Eventyr</i> ved Villy Sørensen er ikke samme bog som <i>Eventyr: et udvalg</i> med Ib Spang Olsens illustrationer.</dd>
+      <dt>Prisen</dt><dd>En oversættelse tæller nu som sin egen titel. Det er med vilje: en overset udgave koster ingenting, en falsk triplet koster en bog.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.5.0</span>
+      <span class="h">Titler slås rigtigere sammen</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Fejlen</dt><dd>Før blev alt efter det første kolon skåret væk, så “PS: jeg elsker dig” og “PS: Jeg elsker dig for evigt” blev talt som samme bog.</dd>
+      <dt>Nu</dt><dd>Undertitler beholdes, medmindre de beskriver samme bog i en anden form: genre (“roman”, “krimi”, “noveller”), format (“mp3”, storskriftserier) eller udgave. Bindnumre trækkes stadig ud, uanset hvordan de er skrevet – “Bind 3”, “1. bind”, “[7. bind]”, “5. bog”, “Del 2”.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.4.2</span>
+      <span class="h">Materialer, der står to gange i filen</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Hvilken række beholdes</dt><dd>Står det samme materialenummer to gange – typisk fordi materialet skiftede status, mens udtrækket blev lavet – beholdes den række, der <b>ikke</b> siger Hjemme. Ellers kunne listen sende dig ud til en hylde, hvor bogen ikke står.</dd>
+      <dt>Se dem selv</dt><dd>Beskeden om det har fået en knap, der henter numrene som CSV, hvis du vil slå dem op i Cicero.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.4.1</span>
+      <span class="h">Sproglig rettelse</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Overskrift</dt><dd>“Tæl inden for samme…” står nu i ét stykke i stedet for at være delt op.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.4.0</span>
+      <span class="h">Nulstil og favoritter</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Nulstil</dt><dd>En knap ved siden af Find, som sætter alle indstillinger tilbage til standard.</dd>
+      <dt>Favoritter</dt><dd>Når du gemmer en opsætning, kan du sætte flueben i “Vis som genvej på forsiden”. Så ligger den som en knap under funktionen på forsiden og kører med det samme, når du trykker. Stjernen følger med, når du deler dine opsætninger.</dd>
+      <dt>Gem</dt><dd>Foregår nu i en lille linje i panelet i stedet for en dialogboks.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.3.0</span>
+      <span class="h">Faste niveaunavne og bedre filhåndtering</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Niveauerne</dt><dd>Hedder igen Ciceros egne: Filial, Afdeling, Opstilling, Delopstilling – og Sektion, når placeringen har fem led.</dd>
+      <dt>Grundopsætning</dt><dd>Vælg alle / Fravælg alle under hvert niveau.</dd>
+      <dt>Filer</dt><dd>“Tilføj filer” og “Start forfra” i stedet for “Vælg en anden fil”, så det er tydeligt, at man kan lægge flere filer oveni. De indlæste filer står listet på forsiden.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.2.0</span>
+      <span class="h">Flere filer på én gang</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Flere CSV-filer</dt><dd>De lægges sammen, filer med andre kolonner springes over med en besked, og rækker med et materialenummer, der allerede er læst, tælles kun én gang. Nyttigt, når Cicero ikke kan levere hele samlingen i ét udtræk.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.1.0</span>
+      <span class="h">Grundopsætning og synlige stedfiltre</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Grundopsætning</dt><dd>Fravælg de steder, der aldrig skal med – et arkiv, tomme filialer. Valget huskes og gælder alle opgaver.</dd>
+      <dt>“Søg i”</dt><dd>Står nu synligt i alle funktioner med ét felt pr. placeringsniveau.</dd>
+      <dt>Status</dt><dd>Foldet sammen med Hjemme valgt fra start; resten kan foldes ud.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
+      <span class="v">1.0.0</span>
+      <span class="h">Første udgave</span>
+      <span class="d">7. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Tre funktioner</dt><dd><b>Flere eksemplarer</b> – antallet vælger du selv, så tripletter, dubletter og udstillingsstakke er samme værktøj. <b>Hjemme her, og også dér</b> og <b>Hjemme her, men ikke dér</b>.</dd>
+      <dt>Passer til dit bibliotek</dt><dd>Alle valgmuligheder – filialer, opstillinger, materialegrupper, statusser – læses ud af din egen fil.</dd>
+      <dt>Se før du gør noget</dt><dd>Resultatet vises med afkrydsning pr. eksemplar, så du kan fravælge, inden du eksporterer.</dd>
+      <dt>To udgange</dt><dd>Hyldeliste til print, sorteret efter placering, og CSV til Cicero med ét materialenummer pr. linje.</dd>
+      <dt>Gemte opsætninger</dt><dd>Kan deles med kolleger som en fil.</dd>
+    </dl>
+  </details>
+  </div>
+
+  <div class="note">
+    <h2>Om værktøjet</h2>
+    <p>Hyldetjek kører helt i din browser. Din eksport bliver læst på din egen computer og sendes ingen steder hen. Gemte opsætninger og grundopsætning ligger i browserens eget lager – de følger den maskine og den browser, du bruger, ikke dig. Skal de med over på en anden computer, bruger du Del og Hent.</p>
+  </div>
+</div>
+</body>
+</html>
