@@ -78,7 +78,8 @@ p{margin:0}
 .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); background:none; border:0; padding:0; cursor:pointer}
 .brand svg{width:28px; height:28px; display:block}
 .brand b{font-size:1.15rem; letter-spacing:-.01em}
-.brand .ver{font-size:.75rem; color:var(--ink-3); margin-left:2px; align-self:flex-end; padding-bottom:3px}
+.top .ver{font-size:.75rem; color:var(--ink-3); text-decoration:none; align-self:flex-end; padding:2px 6px 3px; border-radius:4px; margin-right:auto}
+.top .ver:hover{color:var(--green); background:var(--green-2)}
 .top .file{display:flex; align-items:center; gap:12px; font-size:.9rem; color:var(--ink-2); min-width:0}
 .top .file .btn{white-space:nowrap}
 @media (max-width:600px){ .top .file > span:not(.name){display:none} }
@@ -351,7 +352,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.8.4 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.9.0 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -392,9 +393,10 @@ details.base .body > p{margin:12px 0 14px}
    1.8.4  panelet foldede "Afgræns materialerne" sammen og sprang til toppen, hver gang det blev
           tegnet om (sortering, gemte opsætninger, valg af felt). Nu bevares både åbne afsnit,
           søgefelter i lange lister og rullepositionen
+   1.9.0  klassifikation kan afgrænses til et interval, fx 64 til 64.12 eller 99.1 til 99.94
    =================================================================== */
 
-const VERSION = '1.8.4';
+const VERSION = '1.9.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -511,13 +513,32 @@ function buildModel(rows, map){ const r = parseRecs(rows, map); return modelFrom
 function val(x, field){ return field.startsWith('lv') ? x.lv[+field.slice(2)] : x[field]; }
 
 /* ---------------- filtre ---------------- */
+// DK5: tallet forrest i klassemærket. "99.4 Ditlevsen, Tove" -> 99.4, "sk"/"te 83.8" -> null
+const RE_DK5 = /^(\d+(?:\.\d+)?)/;
+function dkCode(v){ const m = RE_DK5.exec(String(v||'').trim()); return m ? m[1] : ''; }
+function dkNum(v){ const c = dkCode(String(v||'').replace(',', '.')); return c === '' ? null : parseFloat(c); }
 // filters: { lv0:[...], lv1:[...], type:[...], gruppe:[...], klass:{mode:'is'|'starts'|'contains', text:''} }
 function applyFilters(recs, filters){
   const fl = [];
   for (const [f, v] of Object.entries(filters||{})){
     if (f === 'klass'){
+      const mode = (v && v.mode) || 'is';
+      if (mode === 'between'){
+        const a = dkNum(v.from), b = dkNum(v.to);
+        if (a === null && b === null) continue;
+        const toCode = String(v.to||'').trim().replace(',', '.');
+        fl.push(x => {
+          const n = dkNum(x.klass); if (n === null) return false;
+          if (a !== null && n < a) return false;
+          if (b !== null && n > b){
+            const c = dkCode(x.klass);            // 64.125 hører under 64.12
+            if (!(toCode && c.startsWith(toCode))) return false;
+          }
+          return true;
+        });
+        continue;
+      }
       const t = norm(v && v.text); if (!t) continue;
-      const mode = (v.mode||'is');
       fl.push(x => { const k = norm(x.klass); return mode==='is' ? k===t : mode==='starts' ? k.startsWith(t) : k.includes(t); });
     } else if (Array.isArray(v) && v.length){
       const set = new Set(v); fl.push(x => set.has(val(x,f)));
@@ -734,7 +755,7 @@ function render(){ $app.innerHTML = S.view==='home' ? homeView() : toolView(); b
 
 function topBar(){
   const f = S.model ? `<div class="file"><span class="name" title="${esc(S.fileName)}">${S.fileCount>1?S.fileCount+' filer':esc(S.fileName)}</span><span>${nf(S.model.recs.length)} materialer</span><button class="btn quiet" data-act="addfiles">Tilføj filer</button></div>` : '';
-  return `<div class="top"><button class="brand" data-act="home" aria-label="Til forsiden">${ICON.logo}<b>Hyldetjek</b><span class="ver">${VERSION}</span></button>${f}<input type="file" id="fileInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
+  return `<div class="top"><button class="brand" data-act="home" aria-label="Til forsiden">${ICON.logo}<b>Hyldetjek</b></button><a class="ver" href="changelog.md" title="Se hvad der er ændret i denne og tidligere versioner">${VERSION}</a>${f}<input type="file" id="fileInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
 }
 
 function homeView(){
@@ -786,7 +807,7 @@ const HELP = {
   sideB_ikke:'Bruges til at sortere fra: titlen skal have mindst ét eksemplar registreret dette sted, hjemme eller udlånt – det er lige meget hvilket. Sæt den til udlånet, så du kun får bøger, der også står på hylden til daglig.',
   exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
   places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
-  filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde.',
+  filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde. Med "mellem" kan du tage et spænd af klassemærker, fx 99.1 til 99.94 – der læses tallet forrest, så "99.4 Ditlevsen, Tove" tæller som 99.4, og undergrupper som 64.125 kommer med, når du slutter ved 64.12.',
   presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
 };
 function helpBtn(k){ return `<button class="help" data-act="help" data-k="${k}" aria-label="Hjælp" title="Hvad betyder det?">?</button>`; }
@@ -855,11 +876,16 @@ function placeView(fl){
 }
 function filtersView(fl){
   const m=S.model; const parts=[];
-  const cnt = Object.entries(fl||{}).reduce((a,[k,v])=> a + (k==='klass' ? (v&&v.text?1:0) : (k.startsWith('lv') ? 0 : (Array.isArray(v)&&v.length?1:0))),0);
+  const cnt = Object.entries(fl||{}).reduce((a,[k,v])=> a + (k==='klass' ? ((v&&(v.text||v.from||v.to))?1:0) : (k.startsWith('lv') ? 0 : (Array.isArray(v)&&v.length?1:0))),0);
   parts.push(`<div class="lvl"><b>Mat. type</b>${chipList('type', fl.type, 'f_type')}</div>`);
   if (m.fields.gruppe.values.length>1) parts.push(`<div class="lvl"><b>Materialegruppe</b>${chipList('gruppe', fl.gruppe, 'f_gruppe')}</div>`);
-  const kl = fl.klass||{mode:'is',text:''};
-  parts.push(`<div class="lvl"><b>Klassifikation</b><div class="fieldrow"><select name="f_klass_mode"><option value="is" ${kl.mode==='is'?'selected':''}>er præcis</option><option value="starts" ${kl.mode==='starts'?'selected':''}>begynder med</option><option value="contains" ${kl.mode==='contains'?'selected':''}>indeholder</option></select><input type="text" name="f_klass_text" value="${esc(kl.text)}" placeholder="fx sk eller 64" style="flex:1;min-width:90px"></div></div>`);
+  const kl = fl.klass||{mode:'is',text:'',from:'',to:''};
+  const between = kl.mode==='between';
+  parts.push(`<div class="lvl"><b>Klassifikation</b><div class="fieldrow"><select name="f_klass_mode"><option value="is" ${kl.mode==='is'?'selected':''}>er præcis</option><option value="starts" ${kl.mode==='starts'?'selected':''}>begynder med</option><option value="contains" ${kl.mode==='contains'?'selected':''}>indeholder</option><option value="between" ${between?'selected':''}>mellem</option></select>${
+    between
+      ? `<input type="text" name="f_klass_from" value="${esc(kl.from||'')}" placeholder="fra, fx 64" style="width:6.5em" inputmode="decimal"><span class="muted small">til</span><input type="text" name="f_klass_to" value="${esc(kl.to||'')}" placeholder="til, fx 64.12" style="width:6.5em" inputmode="decimal">`
+      : `<input type="text" name="f_klass_text" value="${esc(kl.text)}" placeholder="fx sk eller 64" style="flex:1;min-width:90px">`
+  }</div>${between?`<p class="muted small" style="margin-top:6px">Kun klassemærker, der begynder med et tal. Skønlitteratur (sk) kommer ikke med.</p>`:''}</div>`);
   return `<details class="sec"><summary><span class="lbl2">Afgræns materialerne ${helpBtn('filters')}</span><span style="display:flex;align-items:center;gap:10px">${cnt?`<span class="cnt">${cnt} ${cnt===1?'aktiv':'aktive'}</span>`:''}<span class="chev">${ICON.chev}</span></span></summary>
     <div class="body levelgrid">${parts.join('')}</div></details>`;
 }
@@ -912,7 +938,10 @@ function readPanel(){
   const fl = {};
   fl.type = vals('f_type'); fl.gruppe = vals('f_gruppe');
   S.model.levelNames.forEach((n,i)=>{ fl['lv'+i] = vals('f_lv'+i); });
-  fl.klass = { mode: (p.querySelector('select[name="f_klass_mode"]')||{}).value||'is', text: ((p.querySelector('input[name="f_klass_text"]')||{}).value||'').trim() };
+  const km = (p.querySelector('select[name="f_klass_mode"]')||{}).value||'is';
+  fl.klass = km==='between'
+    ? { mode:'between', text:'', from: ((p.querySelector('input[name="f_klass_from"]')||{}).value||'').trim(), to: ((p.querySelector('input[name="f_klass_to"]')||{}).value||'').trim() }
+    : { mode: km, text: ((p.querySelector('input[name="f_klass_text"]')||{}).value||'').trim(), from:'', to:'' };
   s.filters = fl;
   store('last:'+S.fn, s);
 }
@@ -1108,6 +1137,7 @@ function onChange(e){
   const t = e.target;
   if (t.matches('input[type=file]') && t.id!=='presetFile'){ const fs=[...t.files]; if (fs.length) readFiles(fs, t.dataset.mode==='append'); t.value=''; return; }
   if (t.matches('.chip input')){ t.closest('.chip').classList.toggle('on', t.checked); if (t.name.startsWith('base_lv')) onBaseChange(); return; }
+  if (t.matches('select[name="f_klass_mode"]')){ readPanel(); rerenderPanel(); return; }
   if (t.matches('select[name="A_field"], select[name="B_field"]')){ readPanel(); rerenderPanel(); return; }
   if (t.matches('select[name="preset"]')){ if (!t.value) return; const mine=load('presets',[]).filter(p=>p.fn===S.fn); const p=mine[+t.value]; if (p){ S.settings[S.fn]=sanitize(p.settings,S.fn); S.presetName=p.name; rerenderPanel(); toast(`"${p.name}" hentet`); } return; }
   if (t.matches('select[name="sort"]')){ S.sort=t.value; refreshResults(); return; }
