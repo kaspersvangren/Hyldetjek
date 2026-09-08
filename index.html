@@ -351,7 +351,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.8.3 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.8.4 (7. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -389,9 +389,12 @@ details.base .body > p{margin:12px 0 14px}
           hjælpen forklarer forskellen på de to steder og på de to sammenlignende funktioner
    1.8.3  kun tekst: vejledningerne er eksempler, ikke forskrifter – ingen antagelser om hvad
           brugeren vil opnå
+   1.8.4  panelet foldede "Afgræns materialerne" sammen og sprang til toppen, hver gang det blev
+          tegnet om (sortering, gemte opsætninger, valg af felt). Nu bevares både åbne afsnit,
+          søgefelter i lange lister og rullepositionen
    =================================================================== */
 
-const VERSION = '1.8.3';
+const VERSION = '1.8.4';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -1089,7 +1092,18 @@ function onBaseChange(){
   S.base = b; store('base', b); S.baseOpen = true; applyBase(); S.results=null; render();
 }
 function refreshResults(){ const el=document.getElementById('results'); const y=window.scrollY; el.innerHTML=resultsView(); window.scrollTo(0,y); }
-function rerenderPanel(){ document.getElementById('panel').innerHTML = panelView(); }
+function rerenderPanel(){
+  const panel = document.getElementById('panel');
+  const openSecs = [...panel.querySelectorAll('details.sec')].map(d=>d.open);
+  const filters = {}; panel.querySelectorAll('.chipbox').forEach(b=>{ const f=b.querySelector('.chips-filter'); if (f && f.value) filters[b.dataset.name]=f.value; });
+  const helps = [...panel.querySelectorAll('.helptext')].map(h=>h.dataset.k);
+  const y = window.scrollY;
+  panel.innerHTML = panelView();
+  panel.querySelectorAll('details.sec').forEach((d,i)=>{ if (openSecs[i]!==undefined) d.open = openSecs[i]; });
+  for (const [name,val] of Object.entries(filters)){ const f = panel.querySelector(`.chipbox[data-name="${name}"] .chips-filter`); if (f){ f.value = val; f.dispatchEvent(new Event('input', {bubbles:true})); } }
+  for (const k of helps){ const b = panel.querySelector(`.help[data-k="${k}"]`); if (b) b.click(); }
+  window.scrollTo(0, y);
+}
 function onChange(e){
   const t = e.target;
   if (t.matches('input[type=file]') && t.id!=='presetFile'){ const fs=[...t.files]; if (fs.length) readFiles(fs, t.dataset.mode==='append'); t.value=''; return; }
