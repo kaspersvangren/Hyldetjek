@@ -101,65 +101,84 @@ p{margin:0}
 .btn svg{width:18px; height:18px}
 
 /* ---------- home ---------- */
-.hero{padding:56px 0 28px; max-width:640px}
+.home{display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,42%); gap:34px; align-items:start; padding:44px 0 30px}
+@media (max-width:900px){ .home{grid-template-columns:1fr; gap:24px; padding-top:32px} }
 .hero h1{text-wrap:balance}
-.hero p{margin-top:10px; font-size:1.1rem; color:var(--ink-2)}
+.hero p{margin-top:10px; font-size:1.05rem; color:var(--ink-2); max-width:46ch}
+.slots{display:flex; flex-direction:column; gap:14px}
 
-.drop{ display:block;
-  margin:8px 0 40px; padding:36px 28px; text-align:center;
+.drop{padding:26px 22px; text-align:center; display:block;
   border:2px dashed var(--rule); border-radius:var(--radius); background:var(--card);
-  cursor:pointer; transition:border-color .12s, background .12s;
-}
+  cursor:pointer; transition:border-color .12s, background .12s;}
 .drop:hover, .drop.over{border-color:var(--green); background:var(--green-2)}
-.loaded.over{border-color:var(--green); background:var(--green-2)}
-.drop strong{font-size:1.1rem}
-.drop .sub{margin-top:6px; color:var(--ink-2)}
-.drop .sub2{margin-top:14px; font-size:.85rem; color:var(--ink-3)}
+.drop strong{font-size:1rem}
+.drop .sub{margin-top:6px; color:var(--ink-2); font-size:.9rem}
+.drop .sub2{margin-top:10px; font-size:.82rem; color:var(--ink-3)}
 .drop input{display:none}
+.drop.small{padding:20px 18px}
 
-.loaded{
-  margin:8px 0 40px; padding:20px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;
-  border-radius:var(--radius); background:var(--card); border:1px solid var(--rule); box-shadow:var(--shadow);
-}
-.loaded .ok{width:38px; height:38px; border-radius:50%; background:var(--green-2); color:var(--green); display:grid; place-items:center; flex:none}
-.loaded .ok svg{width:20px;height:20px}
-.loaded .facts{flex:1; min-width:220px}
-.loaded .facts b{display:block; font-size:1.05rem}
-.loaded .facts span{color:var(--ink-2)}
+.loaded{padding:16px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  border-radius:var(--radius); background:var(--card); border:1px solid var(--rule); box-shadow:var(--shadow);}
+.loaded.over{border-color:var(--green); background:var(--green-2)}
+.loaded .ok{width:34px; height:34px; border-radius:50%; background:var(--green-2); color:var(--green); display:grid; place-items:center; flex:none}
+.loaded .ok svg{width:18px;height:18px}
+.loaded.ill .ok{background:var(--amber-2); color:var(--amber)}
+.loaded.ill .age.ok{color:var(--ink-2)}
+.loaded .facts{flex:1; min-width:150px}
+.loaded .facts b{display:block; font-size:1rem}
+.loaded .facts span{color:var(--ink-2); font-size:.875rem}
 .loaded .acts{display:flex; gap:8px; flex-wrap:wrap}
-.loaded .filelist{flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; font-size:.8rem; color:var(--ink-3); border-top:1px solid var(--rule-2); padding-top:10px; margin-top:2px}
-.loaded .filelist:empty{display:none}
-.loaded .age{flex-basis:100%; display:flex; align-items:center; gap:8px; font-size:.875rem; color:var(--ink-2); order:4}
-.loaded .helptext{order:5; flex-basis:100%; margin:0}
+.loaded .acts .btn{padding:8px 12px; font-size:.875rem}
+.loaded .age{flex-basis:100%; display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--ink-2); order:4; position:relative; z-index:1}
 .loaded .age.gul{color:var(--amber); font-weight:700}
 .loaded .age.rod{color:var(--red); font-weight:700}
 .loaded .age .help{border-color:currentColor; color:inherit; background:transparent}
-.loaded .filelist{order:6}
-.top .agedot{display:inline-block; width:8px; height:8px; border-radius:50%; flex:none}
-.top .agedot.gul{background:var(--amber)} .top .agedot.rod{background:var(--red)}
+.loaded .helptext{order:5; flex-basis:100%; margin:0}
+.loaded .filelist{order:6; flex-basis:100%; display:flex; flex-wrap:wrap; gap:5px 10px; font-size:.8rem; color:var(--ink-3); border-top:1px solid var(--rule-2); padding-top:9px}
+.loaded .filelist:empty{display:none}
+.fchip{display:inline-flex; align-items:center; gap:5px; white-space:nowrap; cursor:default}
+.fdot{width:12px; height:12px; border-radius:50%; display:inline-grid; place-items:center; font-size:9px; font-weight:700; line-height:1; color:#fff; flex:none}
+.fdot.ok{background:var(--green)}
+.fdot.gul{background:var(--amber)}
+.fdot.rod{background:var(--red)}
+.fdot.none{background:var(--rule); color:var(--ink-2)}
+
+.illslot{margin:0}
+.illadd{width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; padding:14px 18px;
+  background:var(--card); border:1px dashed var(--rule); border-radius:var(--radius); cursor:pointer; text-align:left}
+.illadd:hover{border-color:var(--green); background:var(--green-2)}
+.illadd svg{width:22px;height:22px;color:var(--green)}
+.illadd b{display:block; font-size:.95rem}
+.illadd i{font-style:normal; color:var(--ink-2); font-size:.85rem}
+.illadd .go{color:var(--green); font-weight:700; white-space:nowrap; font-size:.875rem}
+
+.foot{margin:0 0 64px}
+.warn{margin:14px 0 0; padding:12px 16px; border-radius:var(--radius-s); background:var(--amber-2); color:var(--ink); border-left:4px solid var(--amber); font-size:.9rem}
+.err{margin:0 0 24px; padding:12px 16px; border-radius:var(--radius-s); background:var(--red-2); border-left:4px solid var(--red); font-size:.925rem}
 .linkbtn{background:none; border:0; padding:0; color:var(--green); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:2px}
-.warn{margin:0 0 32px; padding:12px 16px; border-radius:var(--radius-s); background:var(--amber-2); color:var(--ink); border-left:4px solid var(--amber); font-size:.925rem}
-.err{margin:0 0 32px; padding:12px 16px; border-radius:var(--radius-s); background:var(--red-2); border-left:4px solid var(--red); font-size:.925rem}
 
-.fns{list-style:none; margin:0 0 64px; padding:0; border-top:1px solid var(--rule)}
-.fns li{border-bottom:1px solid var(--rule)}
-.fn{
-  width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center;
-  padding:22px 8px; background:none; border:0; text-align:left; cursor:pointer; border-radius:4px;
-}
-.fn:hover:not(:disabled){background:var(--card)}
+.fns{list-style:none; margin:0 0 34px; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(330px,1fr)); gap:14px}
+.fns li{border:1px solid var(--rule); border-radius:var(--radius); background:var(--card); display:flex; flex-direction:column}
+.fns li.off{background:transparent; border-style:dashed}
+.fn{display:grid; grid-template-columns:auto 1fr; gap:2px 14px; align-items:center;
+  width:100%; padding:18px; background:none; border:0; text-align:left; cursor:pointer; border-radius:var(--radius); flex:1}
+.fn:hover:not(:disabled){background:var(--green-2)}
 .fn:disabled{cursor:default}
-.fn:disabled .ico,.fn:disabled .t,.fn:disabled .d{opacity:.45}
-.fn .ico{width:44px; height:44px; border-radius:var(--radius-s); background:var(--green-2); color:var(--green); display:grid; place-items:center}
-.fn .ico svg{width:24px; height:24px}
-.fn .t{font-size:1.15rem; font-weight:700}
-.fn .d{color:var(--ink-2); margin-top:2px}
-.fn .go{color:var(--green); font-weight:700; white-space:nowrap}
-.fn:disabled .go{visibility:hidden}
+.fn:disabled .ico,.fn:disabled .t,.fn:disabled .d{opacity:.5}
+.fn .ico{width:40px; height:40px; border-radius:var(--radius-s); background:var(--green-2); color:var(--green); display:grid; place-items:center; grid-row:1/3}
+.fn .ico svg{width:22px; height:22px}
+.fn .t{font-size:1.05rem; font-weight:700; align-self:end}
+.fn .d{color:var(--ink-2); font-size:.9rem; align-self:start}
+.fn .d i{font-style:normal; color:var(--ink-3)}
+.favs{display:flex; flex-wrap:wrap; gap:6px; padding:0 18px 16px}
+.fav{display:inline-flex; align-items:center; gap:6px; padding:5px 12px 5px 9px; border-radius:999px;
+  border:1px solid var(--rule); background:var(--paper); font-size:.85rem; font-weight:700; color:var(--ink); cursor:pointer}
+.fav:hover{border-color:var(--green); background:var(--green-2); color:var(--green-3)}
+.fav svg{width:14px;height:14px;color:var(--amber)}
 
-.mapping{margin:0 0 40px; padding:20px 24px; border-radius:var(--radius); background:var(--card); border:1px solid var(--rule)}
+.mapping{margin:0; padding:20px 22px; border-radius:var(--radius); background:var(--card); border:1px solid var(--rule)}
 .mapping h3{margin-bottom:6px}
-.mapping .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px 20px; margin-top:14px}
+.mapping .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px 18px; margin-top:14px}
 .mapping label{display:flex; flex-direction:column; gap:4px; font-size:.9rem}
 .mapping select{padding:8px; border-radius:var(--radius-s); border:1px solid var(--rule); background:var(--paper); color:var(--ink); font:inherit}
 
@@ -242,7 +261,7 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .lvlrow .chipbox.collapsed .chips-tools{display:none}
 .lvlrow .chipbox .chips-tools{grid-column:1/-1; margin:0}
 .panel details.sec summary .chev svg{width:16px;height:16px;display:block}
-details.base{margin:-28px 0 36px; background:var(--card); border:1px solid var(--rule); border-radius:var(--radius); padding:0 20px}
+details.base{margin:0; background:var(--card); border:1px solid var(--rule); border-radius:var(--radius); padding:0 20px}
 details.base summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:14px 0; font-weight:700}
 details.base summary::-webkit-details-marker{display:none}
 details.base summary .hint{font-weight:400; color:var(--green); font-size:.875rem; flex:1}
@@ -314,6 +333,16 @@ details.base .body > p{margin:12px 0 14px}
 .tblwrap{overflow-x:auto}
 .more{padding:14px 0 30px; text-align:center}
 
+.tabs{display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--rule)}
+.tab{background:none; border:0; border-bottom:2px solid transparent; padding:8px 14px; cursor:pointer; font-weight:700; color:var(--ink-2); margin-bottom:-1px}
+.tab:hover{color:var(--green)}
+.tab.on{color:var(--green); border-bottom-color:var(--green)}
+table.ill{width:100%; border-collapse:collapse; font-size:.925rem}
+table.ill th{text-align:left; font-weight:400; color:var(--ink-3); font-size:.78rem; padding:4px 10px 6px 0; border-bottom:1px solid var(--rule)}
+table.ill td{padding:8px 10px 8px 0; border-bottom:1px solid var(--rule-2); vertical-align:top}
+table.ill .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.ill td.num{font-weight:700}
+table.ill td.zero{color:var(--red)}
 .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:var(--radius-s); font-size:.9rem; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s}
 .toast.show{opacity:1}
 
@@ -361,7 +390,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.10.1 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.12.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -407,9 +436,13 @@ details.base .body > p{margin:12px 0 14px}
    1.10.0 filens alder læses af filens ændret-tidspunkt og vises på filkortet, i topbjælken og
           på hyldelisten; gul fra 24 timer, rød fra 3 døgn
    1.10.1 alderen regnes i kalenderdage, ikke i døgn: mandag til onsdag er 2 dage
+   1.11.0 fjerde funktion: Fjernlån. Egen filplads til fjernlånseksporten, tre visninger
+          (titler, forfattere, ord), sammenligning med samlingen når den også er lagt op
+   1.12.0 forsiden er lagt om: overskrift og filer side om side, opgaverne som kort i et gitter,
+          grundopsætning og beskeder flyttet ned. Hver fil har sin egen aldersprik
    =================================================================== */
 
-const VERSION = '1.10.1';
+const VERSION = '1.12.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -573,6 +606,18 @@ function groupBy(recs, groupLevels, useForf){
 function inSide(x, side){ if (!side || !side.field || !side.values || !side.values.length) return false; return side.values.includes(val(x, side.field)); }
 function sideDefined(side){ return !!(side && side.field && side.values && side.values.length); }
 
+/* ---------------- ordanalyse ---------------- */
+const STOP_DEFAULT = ['og','i','jeg','det','at','en','den','til','er','som','på','de','med','han','af','for','ikke','der','var','mig','sig','men','et','har','om','vi','min','havde','ham','hun','nu','over','da','fra','du','ud','man','hans','hvor','eller','hvad','skal','selv','her','alle','vil','blev','kunne','ind','når','være','dog','hende','deres','efter','ned','skulle','denne','end','dette','mit','dig','alt','mine','noget','andre','hvis','din','nogle','hos','blive','mange','ad','bliver','hendes','været','jer','sådan','under','the','of','and','a','to','in','on','with','for','is','are','from','by','your','you','how','one','new','best','very','der','die','das','und','le','la','les','el','los','un','une','roman','romaner','krimi','noveller','novelle','digte','fortællinger','fortælling','bind','bog','bogen','bogens','volume','volumes','vol','del','bd','nr','no','disc','disk','udgave','udg','oplag','ved','ill','illustreret','oversat','mp3','lydbog','cd','dvd','blu-ray','book','novel','complete','edition','deluxe'];
+function stopSet(){ const raw = load('stopord', null); const list = raw===null ? STOP_DEFAULT : raw; return new Set(list.map(w=>norm(w)).filter(Boolean)); }
+const RE_WORD = /[a-zæøåäöüéèáàóíúñç']{3,}/g;
+function titleWords(titel, stop){
+  const t = norm(String(titel||'').replace(/\(.*?\)/g,' '));
+  const out = new Set(); let m;
+  RE_WORD.lastIndex = 0;
+  while ((m = RE_WORD.exec(t))){ const w = m[0].replace(/^'+|'+$/g,''); if (w.length>=3 && !stop.has(w)) out.add(w); }
+  return out;
+}
+
 /* ---------------- funktioner ---------------- */
 // Hver funktion returnerer grupper: { k, items:[...alle i gruppen], hits:[...de der tæller], exp:[...de der eksporteres] }
 const FUNCTIONS = {
@@ -652,6 +697,21 @@ const FUNCTIONS = {
       return out;
     },
   },
+  fjernlaan: {
+    title:'Fjernlån',
+    short:'Hvad låner vi ofte hjem udefra – og hvad har vi selv?',
+    explain:'Tæller hvor mange gange hvert værk er hentet hjem som fjernlån. Lægger du også samlingen op, vises det ved siden af, hvor mange eksemplarer I selv har.',
+    needs:'ill',
+    custom:true,
+    howto:[
+      ['Titler vi låner hjem igen og igen','Sæt “mindst antal fjernlån” til fx 5. Listen står med flest øverst.'],
+      ['… som vi ikke selv har','Sæt “vi ejer” til “ingen eksemplarer”. Kræver, at samlingen også er lagt op.'],
+      ['… som vi kun har få af','Sæt “vi ejer” til “højst” og skriv et tal.'],
+      ['Forfattere','Fanen Forfattere tæller på tværs af værker, så en serie ikke skjuler sig i mange enkelttitler.'],
+      ['Ord i titlerne','Fanen Ord viser de ord, der er mest overrepræsenterede i fjernlånene i forhold til jeres egne titler. Den kræver, at samlingen er lagt op, og siger kun noget om den del af samlingen, du har lagt op.']
+    ],
+    defaults:()=>({ min:3, own:'alle', ownMax:1, types:[], minWord:40 }),
+  },
 };
 function pickDefault(model, field, wanted){
   const have = new Set((model.fields[field]||{values:[]}).values.map(v=>v[0]));
@@ -660,7 +720,7 @@ function pickDefault(model, field, wanted){
 
 
 /* ================= UI ================= */
-const S = { fileName:'', fileCount:0, files:[], fileTimes:[], presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
+const S = { fileName:'', fileCount:0, files:[], fileTimes:[], illFiles:[], illTimes:[], ill:null, illWarn:'', illTab:'titler', presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
             settings:{}, results:null, error:'', checked:new Set(), open:new Set(), sort:'forf', shown:150, warn:'' };
 const $app = document.getElementById('app');
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -674,6 +734,8 @@ const ICON = {
   print:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>',
   down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>',
   star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.6l-6 3.3 1.3-6.7-5-4.7 6.8-.8z"/></svg>',
+  ill:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7v14H4zM20 6h-7v14h7z"/><path d="M11 10l2-2 2 2"/></svg>',
+  fjernlaan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h6v15H3z"/><path d="M21 5h-6v15h6z"/><path d="M9.5 9h5M12.5 7l2 2-2 2"/></svg>',
   flere:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V8M10 20V4M15 20V8M20 20V11"/></svg>',
   ogsaa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>',
   ikke:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="12" r="6"/><circle cx="16" cy="12" r="6" stroke-dasharray="3 3"/></svg>',
@@ -702,11 +764,11 @@ function whenText(ms){
   if (ms >= midnat - DAY) return 'i går kl. '+kl;
   return d.toLocaleDateString('da-DK', {weekday:'long', day:'numeric', month:'long'}) + ' kl. ' + kl;
 }
-function ageText(a){
-  const nyeste = a.spread ? `, den nyeste ${whenText(a.newest)}` : '';
-  if (a.days <= 0) return 'Trukket ' + whenText(a.oldest) + nyeste;
-  if (a.days === 1) return 'Filen er fra ' + whenText(a.oldest) + nyeste;
-  return `Filen er ${a.days} dage gammel – trukket ${whenText(a.oldest)}` + nyeste;
+function ageText(a, flere){
+  const hvad = flere ? 'Ældste fil' : 'Filen';
+  if (a.days <= 0) return (flere ? 'Filerne er trukket ' : 'Trukket ') + whenText(a.oldest);
+  if (a.days === 1) return `${hvad} er fra ` + whenText(a.oldest);
+  return `${hvad} er ${a.days} dage gammel – trukket ${whenText(a.oldest)}`;
 }
 
 /* ---------- fil ---------- */
@@ -744,6 +806,74 @@ function readFiles(files, append){
   next(0);
 }
 function missingRoles(){ return ROLES.filter(r=>r.req && !S.map[r.id]); }
+
+/* ---------- fjernlånsfil ---------- */
+function readIll(files, append){
+  files = [...files].filter(f=>f && f.name);
+  if (!files.length) return;
+  files.sort((a,b)=>a.name.localeCompare(b.name,'da',{numeric:true}));
+  append = append && S.ill;
+  S.illWarn='';
+  const stamps = files.map(f => (typeof f.lastModified === 'number' && f.lastModified > 0) ? f.lastModified : null);
+  S.illFiles = append ? S.illFiles.concat(files.map(f=>f.name)) : files.map(f=>f.name);
+  S.illTimes = append ? S.illTimes.concat(stamps) : stamps;
+  toast(files.length===1 ? 'Læser fjernlånsfilen…' : `Læser ${files.length} filer…`);
+  const rows = []; let headers = null;
+  const next = (i) => {
+    if (i >= files.length){
+      if (!rows.length){ S.illWarn='Filen ser tom ud, eller den kunne ikke læses som CSV.'; render(); return; }
+      const map = autoMap(headers);
+      if (ROLES.filter(r=>r.req && !map[r.id]).length){ S.illWarn='Fjernlånsfilen mangler nogle af de kolonner, værktøjet skal bruge – den skal have samme kolonner som materialeeksporten.'; render(); return; }
+      const parsed = parseRecs(rows, map);
+      const prev = append && S.ill ? S.ill.recs : [];
+      buildIll(prev.concat(parsed.recs));
+      render(); return;
+    }
+    Papa.parse(files[i], { header:true, skipEmptyLines:true, encoding:'UTF-8',
+      complete: res => { const h=(res.meta.fields||[]).filter(x=>x!==undefined); if (!headers) headers=h;
+        for (const r of res.data) rows.push(r); next(i+1); },
+      error: err => { S.illWarn='Filen '+files[i].name+' kunne ikke læses: '+err.message; render(); }
+    });
+  };
+  next(0);
+}
+function buildIll(recs){
+  const seen = new Set(); const uniq = [];
+  for (const x of recs){ if (x.nr && seen.has(x.nr)) continue; if (x.nr) seen.add(x.nr); uniq.push(x); }
+  const works = new Map();
+  for (const x of uniq){
+    const k = x.akey + '|' + x.tkey;
+    let w = works.get(k);
+    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, n:0, types:new Map(), grupper:new Map() }; works.set(k,w); }
+    w.n++;
+    if (x.type) w.types.set(x.type,(w.types.get(x.type)||0)+1);
+    if (x.gruppe) w.grupper.set(x.gruppe,(w.grupper.get(x.gruppe)||0)+1);
+    if (!w.forf && x.forf) w.forf = x.forf;
+  }
+  const types = new Map();
+  for (const x of uniq){ const t = x.type || ''; types.set(t,(types.get(t)||0)+1); }
+  S.ill = { recs:uniq, works, count:uniq.length,
+            types:[...types.entries()].sort((a,b)=>b[1]-a[1]) };
+}
+function illAge(){
+  const t = S.illTimes.filter(x=>x); if (!t.length) return null;
+  const oldest = Math.min(...t), newest = Math.max(...t);
+  const days = Math.round((dayStart(Date.now()) - dayStart(oldest)) / DAY);
+  return { oldest, newest, days, level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok', spread: newest-oldest > 3600000 };
+}
+
+/* ---------- egen beholdning som opslag ---------- */
+function ownIndex(){
+  if (!S.model) return null;
+  if (S._own && S._ownFor === S.model) return S._own;
+  const works = new Map(), authors = new Map();
+  for (const x of S.model.recs){
+    const k = x.akey + '|' + x.tkey;
+    works.set(k, (works.get(k)||0)+1);
+    if (x.akey){ let a = authors.get(x.akey); if (!a){ a = {ex:0, titler:new Set()}; authors.set(x.akey,a); } a.ex++; a.titler.add(x.tkey); }
+  }
+  S._own = { works, authors }; S._ownFor = S.model; return S._own;
+}
 function finishLoad(){
   if (missingRoles().length){ S.model=null; render(); return; }
   S.full = parseRecs(S.rows, S.map);
@@ -814,22 +944,56 @@ function homeView(){
     mid = `<div class="loaded" id="drop"><div class="ok">${ICON.check}</div>
       <div class="facts"><b>${S.files.length===1?esc(S.files[0]):S.files.length+' filer'}</b><span>${nf(m.recs.length)} materialer${m.excluded?` (${nf(m.fullCount)} i filen, ${nf(m.excluded)} fravalgt)`:''}, ${lv0} ${lv0===1?'sted':'steder'}, ${nf(placs)} placeringer, ${nf(new Set(m.recs.map(x=>x.akey+'|'+x.tkey)).size)} titler</span></div>
       <div class="acts"><button class="btn primary" data-act="addfiles">Tilføj filer</button><button class="btn" data-act="pick">Start forfra</button></div>
-      ${(()=>{ const a=fileAge(); if (!a) return ''; return `<div class="age ${a.level}"><span>${esc(ageText(a))}</span>${helpBtn('alder')}</div>`; })()}
-      <div class="filelist">${S.files.map(f=>`<span>${esc(f)}</span>`).join('')}</div></div>${baseView()}`;
+      ${(()=>{ const a=fileAge(); if (!a) return ''; return `<div class="age ${a.level}"><span>${esc(ageText(a, S.files.length>1))}</span>${helpBtn('alder')}</div>`; })()}
+      <div class="filelist">${fileChips(S.files, S.fileTimes)}</div></div>`;
   }
   const presets = load('presets',[]);
-  const fns = Object.entries(FUNCTIONS).map(([id,f]) => { const favs = S.model ? presets.filter(p=>p.fn===id && p.fav) : [];
-    return `<li><button class="fn" data-act="open" data-fn="${id}" ${S.model?'':'disabled'}>
-      <span class="ico">${ICON[id]}</span><span><span class="t">${esc(f.title)}</span><div class="d">${esc(f.short)}</div></span><span class="go">Åbn</span></button>
+  const fns = Object.entries(FUNCTIONS).map(([id,f]) => { const ready = f.needs==='ill' ? !!S.ill : !!S.model;
+    const favs = ready ? presets.filter(p=>p.fn===id && p.fav) : [];
+    return `<li class="${ready?'':'off'}"><button class="fn" data-act="open" data-fn="${id}" ${ready?'':'disabled'}>
+      <span class="ico">${ICON[id]}</span><span class="t">${esc(f.title)}</span><span class="d">${esc(f.short)}${!ready&&f.needs==='ill'?' <i>Kræver en fjernlånsfil.</i>':''}</span></button>
       ${favs.length?`<div class="favs">${favs.map(p=>`<button class="fav" data-act="fav" data-fn="${id}" data-name="${esc(p.name)}" title="Åbn og kør med denne indstilling">${ICON.star}${esc(p.name)}</button>`).join('')}</div>`:''}</li>`; }).join('');
   return `<div class="wrap">${topBar()}
-    <div class="hero"><h1>Find det på hylderne, som Cicero ikke viser dig</h1><p>Læs en eksport af samlingen ind, vælg en opgave, og få en liste at gå ud med – eller en fil af materialenumre til Cicero.</p></div>
-    ${mid}
+    <div class="home">
+      <div class="hero"><h1>Find det på hylderne, som Cicero ikke viser dig</h1>
+        <p>Læs en eksport af samlingen ind, vælg en opgave, og få en liste at gå ud med – eller en fil af materialenumre til Cicero.</p></div>
+      <div class="slots">${mid}${illCard()}</div>
+    </div>
     ${S.error?`<div class="err">${esc(S.error)}</div>`:''}
-    ${S.warn&&S.model?`<div class="warn">${esc(S.warn)}${S.dupes?` <button class="linkbtn" data-act="dupecsv">Hent numrene som CSV</button>`:''}</div>`:''}
-    <ul class="fns">${fns}</ul></div>`;
+    <ul class="fns">${fns}</ul>
+    ${S.model?`<div class="foot">${baseView()}${S.warn?`<div class="warn">${esc(S.warn)}${S.dupes?` <button class="linkbtn" data-act="dupecsv">Hent numrene som CSV</button>`:''}</div>`:''}</div>`:''}
+    </div>`;
 }
 
+function fileLevel(ms){
+  if (!ms) return null;
+  const days = Math.round((dayStart(Date.now()) - dayStart(ms)) / DAY);
+  return { days, level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok' };
+}
+function fileChips(names, times){
+  return names.map((f,i)=>{
+    const l = fileLevel(times[i]);
+    const title = l ? `${f} · trukket ${whenText(times[i])}` : `${f} · uden tidsstempel`;
+    const mark = !l ? '<span class="fdot none">?</span>' : l.level==='ok' ? '<span class="fdot ok"></span>' : `<span class="fdot ${l.level}">!</span>`;
+    return `<span class="fchip" title="${esc(title)}">${mark}${esc(f)}</span>`;
+  }).join('');
+}
+function illCard(){
+  const open = S.ill || S.illOpen;
+  if (!open) return `<div class="illslot"><button class="illadd" data-act="illopen">${ICON.ill}<span><b>Har du også en fjernlånsfil?</b><i>Læg den op, så kan du se, hvad I ofte låner hjem udefra.</i></span><span class="go">Læg op</span></button></div>`;
+  if (!S.ill) return `<label class="drop small" id="illdrop" for="illInput2">
+      <strong>Træk fjernlånseksporten herind, eller klik for at vælge den</strong>
+      <div class="sub">Samme kolonner som materialeeksporten. Hvert fjernlån er sin egen række.</div>
+      ${S.illWarn?`<div class="sub2" style="color:var(--red)">${esc(S.illWarn)}</div>`:''}
+      <input type="file" id="illInput2" accept=".csv,.txt,text/csv" multiple></label>`;
+  const a = illAge();
+  return `<div class="loaded ill" id="illdrop"><div class="ok">${ICON.ill}</div>
+    <div class="facts"><b>${S.illFiles.length===1?esc(S.illFiles[0]):S.illFiles.length+' filer'}</b><span>${nf(S.ill.count)} fjernlån, ${nf(S.ill.works.size)} forskellige værker</span></div>
+    <div class="acts"><button class="btn" data-act="illadd">Tilføj filer</button><button class="btn quiet" data-act="illclear">Fjern</button></div>
+    ${a ? `<div class="age ${a.level}"><span>${esc(ageText(a, S.illFiles.length>1))}</span></div>` : ''}
+    ${S.illWarn?`<div class="filelist" style="color:var(--red)">${esc(S.illWarn)}</div>`:`<div class="filelist">${fileChips(S.illFiles, S.illTimes)}</div>`}
+    <input type="file" id="illInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
+}
 function mappingView(){
   const opts = h => `<option value="">– ikke i filen –</option>` + S.headers.filter(x=>x).map(x=>`<option value="${esc(x)}" ${S.map[h]===x?'selected':''}>${esc(x)}</option>`).join('');
   return `<div class="mapping"><h3>Hvilke kolonner er hvad?</h3>
@@ -850,6 +1014,9 @@ const HELP = {
   exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
   places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
   filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde. Med "mellem" kan du tage et spænd af klassemærker, fx 99.1 til 99.94 – der læses tallet forrest, så "99.4 Ditlevsen, Tove" tæller som 99.4, og undergrupper som 64.125 kommer med, når du slutter ved 64.12.',
+  illmin:'Hvor mange gange skal et værk være hentet hjem, før det kommer med på listen? 1 viser alt, 5 viser dem, I har lånt igen og igen.',
+  illown:'Sammenligner med den samling, du har lagt op på forsiden. “Ingen eksemplarer” finder det, I slet ikke har – husk at det kun gælder den del af samlingen, der er i filen. Har du kun lagt voksenafdelingen op, ser børnebøger ud, som om I ikke har dem.',
+  illord:'Ordene sammenlignes med jeres egne titler: et ord kommer højt op, hvis det fylder meget mere i fjernlånene end på jeres hylder. Listen “ord der springes over” kan du rette i – ét ord pr. mellemrum.',
   alder:'Filen er et øjebliksbillede af samlingen, da du trak den. Siden da kan materialer være udlånt, afleveret, flyttet eller kasseret. Jo ældre filen er, jo større er risikoen for, at listen ikke passer med hylden – at du går forgæves efter en bog, eller masseretter numre, der har ændret sig.',
   presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
 };
@@ -943,7 +1110,28 @@ function presetsView(){
     <input type="file" id="presetFile" accept=".json" class="hidden"></div>
     <div class="saveform hidden"><input type="text" name="presetName" placeholder="Navn på indstillingen" maxlength="40"><label class="chip"><input type="checkbox" name="presetFav"> Vis som genvej på forsiden</label><div class="saveacts"><button class="btn primary" data-act="savepreset2">Gem</button><button class="btn quiet" data-act="savecancel">Annuller</button></div></div></div>`;
 }
+function illPanelView(){
+  const s = curSettings(); const own = ownIndex();
+  const types = S.ill.types.filter(t=>t[0]);
+  return `<div class="sec"><h3><span class="lbl2">Mindst hvor mange fjernlån? ${helpBtn('illmin')}</span></h3><div class="body">
+      <div class="fieldrow"><input type="number" name="illmin" min="1" max="999" value="${s.min}"><label>gange hentet hjem</label></div></div></div>
+    <div class="sec"><h3><span class="lbl2">Vi ejer selv ${helpBtn('illown')}</span></h3><div class="body">
+      ${own ? `<div class="radio" style="flex-direction:column; align-items:flex-start; gap:8px">
+        <label><input type="radio" name="illown" value="alle" ${s.own==='alle'?'checked':''}> ligegyldigt</label>
+        <label><input type="radio" name="illown" value="ingen" ${s.own==='ingen'?'checked':''}> ingen eksemplarer</label>
+        <label><input type="radio" name="illown" value="hoejst" ${s.own==='hoejst'?'checked':''}> højst <input type="number" name="illownmax" min="0" max="99" value="${s.ownMax}" style="width:4.5em"> eksemplarer</label>
+      </div>` : `<p class="muted small">Læg samlingen op på forsiden, så kan du sammenligne med jeres egen beholdning.</p>`}
+    </div></div>
+    ${types.length>1?`<div class="sec"><h3>Mat. type</h3><div class="body"><div class="chips">${types.map(([v,n])=>`<label class="chip ${(s.types||[]).includes(v)?'on':''}"><input type="checkbox" name="illtype" value="${esc(v)}" ${(s.types||[]).includes(v)?'checked':''}> ${esc(v)} <span class="n">${nf(n)}</span></label>`).join('')}</div><p class="muted small" style="margin-top:8px">Intet valgt: alle typer.</p></div></div>`:''}
+    ${S.illTab==='ord'?`<div class="sec"><h3><span class="lbl2">Ord ${helpBtn('illord')}</span></h3><div class="body">
+      <div class="fieldrow"><input type="number" name="illminword" min="5" max="9999" value="${s.minWord}"><label>forekomster mindst</label></div>
+      <label class="small muted" style="display:block;margin:10px 0 4px">Ord der springes over</label>
+      <textarea name="stopord" rows="4" style="width:100%; font:inherit; font-size:.85rem; padding:8px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); color:var(--ink)">${esc((load('stopord',null)||STOP_DEFAULT).join(' '))}</textarea>
+      <button class="btn quiet" data-act="stopreset" style="margin-top:6px">Tilbage til standardlisten</button></div></div>`:''}
+    <div class="run"><button class="btn primary" data-act="run">Find</button><button class="btn quiet" data-act="reset">Nulstil</button></div>`;
+}
 function panelView(){
+  if (FUNCTIONS[S.fn].custom) return illPanelView();
   const s = curSettings(); const m = S.model; const fn = S.fn;
   let body = presetsView();
   if (fn==='flere'){
@@ -967,7 +1155,19 @@ function panelView(){
 }
 
 /* læs indstillinger fra panelet */
+function readIllPanel(){
+  const p = document.getElementById('panel'); const s = curSettings();
+  s.min = Math.max(1, parseInt(p.querySelector('input[name="illmin"]').value)||1);
+  const o = p.querySelector('input[name="illown"]:checked'); s.own = o ? o.value : 'alle';
+  const om = p.querySelector('input[name="illownmax"]'); if (om) s.ownMax = Math.max(0, parseInt(om.value)||0);
+  s.types = [...p.querySelectorAll('input[name="illtype"]:checked')].map(i=>i.value);
+  const mw = p.querySelector('input[name="illminword"]'); if (mw) s.minWord = Math.max(5, parseInt(mw.value)||5);
+  const st = p.querySelector('textarea[name="stopord"]');
+  if (st) store('stopord', st.value.split(/[\s,;]+/).map(w=>w.trim()).filter(Boolean));
+  store('last:'+S.fn, s);
+}
 function readPanel(){
+  if (FUNCTIONS[S.fn].custom) return readIllPanel();
   const p = document.getElementById('panel'); const s = curSettings();
   const vals = name => [...p.querySelectorAll(`input[name="${name}"]:checked`)].map(i=>i.value);
   s.statuses = vals('status');
@@ -1002,7 +1202,32 @@ function sanitize(s, fn){
 }
 
 /* ---------- resultater ---------- */
+function illResultsView(){
+  const R = S.results;
+  const tabs = [['titler','Titler'],['forfattere','Forfattere'],['ord','Ord']];
+  const tabbar = `<div class="tabs">${tabs.map(([id,l])=>`<button class="tab ${S.illTab===id?'on':''}" data-act="illtab" data-t="${id}">${l}</button>`).join('')}</div>`;
+  if (!R) return tabbar + `<div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her.</div>`;
+  if (R.error) return tabbar + `<div class="empty"><b>${esc(R.error)}</b></div>`;
+  if (!R.rows.length) return tabbar + `<div class="empty"><b>Ingenting matcher</b>Prøv et lavere antal eller færre afgrænsninger.</div>`;
+  const own = ownIndex();
+  const head = S.illTab==='ord'
+    ? `<tr><th>Ord</th><th class="num">Fjernlån</th><th class="num">Egne titler</th><th class="num">Overrepr.</th></tr>`
+    : S.illTab==='forfattere'
+      ? `<tr><th>Forfatter</th><th class="num">Fjernlån</th><th class="num">Værker</th>${own?`<th class="num">Egne titler</th><th class="num">Egne ex.</th>`:''}</tr>`
+      : `<tr><th>Forfatter og titel</th><th>Type</th><th class="num">Fjernlån</th>${own?`<th class="num">Egne ex.</th>`:''}</tr>`;
+  const rows = R.rows.slice(0, S.shown).map(r => S.illTab==='ord'
+      ? `<tr><td><b>${esc(r.w)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.own)}</td><td class="num">${r.lift>=10?Math.round(r.lift):r.lift.toFixed(1)}×</td></tr>`
+      : S.illTab==='forfattere'
+        ? `<tr><td><b>${esc(r.forf)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.works)}</td>${own?`<td class="num">${nf(r.ownT)}</td><td class="num">${nf(r.ownEx)}</td>`:''}</tr>`
+        : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}</td>`:''}</tr>`
+    ).join('');
+  return tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
+      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div>
+    <div class="tblwrap"><table class="ill">${`<thead>${head}</thead>`}<tbody>${rows}</tbody></table></div>
+    ${R.rows.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(R.rows.length-S.shown)} tilbage)</button></div>`:''}`;
+}
 function resultsView(){
+  if (FUNCTIONS[S.fn].custom) return illResultsView();
   if (S.error) return `<div class="empty"><b>Det gik ikke</b>${esc(S.error)}</div>`;
   if (!S.results) return `<div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her – du kan se og fravælge eksemplarer, før du eksporterer.</div>`;
   const R = S.results; if (!R.length) return `<div class="empty"><b>Ingen titler matcher</b>${S.fn==='flere'?'Prøv et lavere antal, flere statusser eller færre afgrænsninger.':'Prøv andre steder, flere statusser eller færre afgrænsninger.'}</div>`;
@@ -1049,7 +1274,67 @@ function groupView(g){
 }
 
 /* ---------- handlinger ---------- */
+function illRun(){
+  readIllPanel();
+  const s = curSettings(); const own = ownIndex();
+  const typeSet = new Set(s.types||[]);
+  const keep = w => !typeSet.size || [...w.types.keys()].some(t=>typeSet.has(t));
+  const ownOf = w => own ? (own.works.get(w.k)||0) : null;
+  const passOwn = c => !own || s.own==='alle' || (s.own==='ingen' ? c===0 : c<=s.ownMax);
+  let rows = [], note = '';
+  if (S.illTab === 'titler'){
+    for (const w of S.ill.works.values()){
+      if (w.n < s.min || !keep(w)) continue;
+      const c = ownOf(w); if (!passOwn(c)) continue;
+      const t = [...w.types.entries()].sort((a,b)=>b[1]-a[1])[0];
+      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c, type: t?t[0]:'' });
+    }
+    rows.sort((a,b)=> b.n-a.n || (a.forf||'').localeCompare(b.forf||'','da'));
+    note = `· ${nf(rows.reduce((a,r)=>a+r.n,0))} fjernlån i alt`;
+  } else if (S.illTab === 'forfattere'){
+    const by = new Map();
+    for (const w of S.ill.works.values()){
+      if (!w.akey || !keep(w)) continue;
+      let a = by.get(w.akey); if (!a){ a = { forf:w.forf, n:0, works:0 }; by.set(w.akey,a); }
+      a.n += w.n; a.works++;
+    }
+    for (const [akey,a] of by){
+      if (a.n < s.min) continue;
+      const o = own ? own.authors.get(akey) : null;
+      const ownT = o ? o.titler.size : 0, ownEx = o ? o.ex : 0;
+      if (own && !(s.own==='alle' || (s.own==='ingen' ? ownEx===0 : ownEx<=s.ownMax))) continue;
+      rows.push({ forf:a.forf, n:a.n, works:a.works, ownT, ownEx });
+    }
+    rows.sort((a,b)=> b.n-a.n || a.forf.localeCompare(b.forf,'da'));
+    note = '· tæller alle værker af forfatteren under ét';
+  } else {
+    if (!own) return { error:'Ordanalysen kræver, at samlingen også er lagt op på forsiden.' };
+    const stop = stopSet();
+    const cf = new Map(), cv = new Map();
+    for (const w of S.ill.works.values()){ if (!keep(w)) continue;
+      for (const word of titleWords(w.titel, stop)) cf.set(word,(cf.get(word)||0)+w.n); }
+    const seenTitle = new Set();
+    for (const x of S.model.recs){ const k = x.akey+'|'+x.tkey; if (seenTitle.has(k)) continue; seenTitle.add(k);
+      for (const word of titleWords(x.titel, stop)) cv.set(word,(cv.get(word)||0)+1); }
+    let tf=0, tv=0; for (const n of cf.values()) tf+=n; for (const n of cv.values()) tv+=n;
+    for (const [w,n] of cf){
+      if (n < s.minWord) continue;
+      const o = cv.get(w)||0;
+      const lift = (n/tf) / ((o+1)/tv);
+      rows.push({ w, n, own:o, lift });
+    }
+    rows.sort((a,b)=> b.lift-a.lift);
+    note = '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler';
+  }
+  return { rows, note };
+}
 function run(){
+  if (FUNCTIONS[S.fn].custom){
+    const r = illRun(); S.results = r; S.shown = 100;
+    const el = document.getElementById('results'); el.innerHTML = resultsView();
+    if (!r.error) toast(r.rows.length ? `${nf(r.rows.length)} fundet` : 'Ingenting matcher');
+    return;
+  }
   readPanel(); S.error='';
   const r = FUNCTIONS[S.fn].run(S.model, curSettings());
   if (r && r.error){ S.error=r.error; S.results=null; }
@@ -1062,6 +1347,31 @@ function downloadLines(lines, name){
   const blob = new Blob([lines.join('\r\n')+'\r\n'], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function illRowsForOutput(){
+  const R = S.results; if (!R || !R.rows) return null;
+  const own = ownIndex();
+  if (S.illTab==='ord') return { head:['Ord','Fjernlån','Egne titler','Overrepræsentation'], rows:R.rows.map(r=>[r.w,r.n,r.own,(Math.round(r.lift*10)/10)+'x']) };
+  if (S.illTab==='forfattere') return { head:['Forfatter','Fjernlån','Værker'].concat(own?['Egne titler','Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.n,r.works].concat(own?[r.ownT,r.ownEx]:[])) };
+  return { head:['Forfatter','Titel','Type','Fjernlån'].concat(own?['Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.titel,r.type,r.n].concat(own?[r.own]:[])) };
+}
+function illCsv(){
+  const d = illRowsForOutput(); if (!d) return;
+  const q = v => { const t = String(v==null?'':v); return /[";\r\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  const lines = [d.head.map(q).join(';')].concat(d.rows.map(r=>r.map(q).join(';')));
+  downloadLines(lines, `hyldetjek-fjernlaan-${S.illTab}-${new Date().toISOString().slice(0,10)}.csv`);
+  toast(`${nf(d.rows.length)} linjer hentet`);
+}
+function illPrint(){
+  const d = illRowsForOutput(); if (!d) return;
+  const s = curSettings(); const a = illAge();
+  const titles = {titler:'Titler', forfattere:'Forfattere', ord:'Ord i titlerne'};
+  let html = `<h1>Fjernlån: ${titles[S.illTab]}</h1><div class="pm">${new Date().toLocaleDateString('da-DK')} · ${esc(S.illFiles.join(', '))}${a?` (trukket ${esc(whenText(a.oldest))})`:''} · ${nf(d.rows.length)} linjer · mindst ${S.illTab==='ord'?s.minWord+' forekomster':s.min+' fjernlån'}</div>`;
+  html += `<table><thead><tr>${d.head.map((h,i)=>`<th${i?' class="nr"':''}>${esc(h)}</th>`).join('')}</tr></thead><tbody>`;
+  for (const r of d.rows) html += `<tr>${r.map((c,i)=>`<td${i?' class="nr"':''}>${esc(c)}</td>`).join('')}</tr>`;
+  html += '</tbody></table>';
+  document.getElementById('print').innerHTML = html;
+  window.print();
 }
 function exportCsv(){
   const items = checkedItems().filter(x=>x.nr);
@@ -1112,17 +1422,24 @@ function init(){
   $app.addEventListener('click', onClick);
   $app.addEventListener('change', onChange);
   $app.addEventListener('input', onInput);
-  ['dragenter','dragover'].forEach(ev=>$app.addEventListener(ev, e=>{ const d=e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.add('over'); } }));
-  $app.addEventListener('dragleave', e=>{ const d=e.target.closest('#drop'); if (d) d.classList.remove('over'); });
-  $app.addEventListener('drop', e=>{ const d=e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.remove('over'); readFiles(e.dataTransfer.files, !!S.model); } });
+  ['dragenter','dragover'].forEach(ev=>$app.addEventListener(ev, e=>{ const d=e.target.closest('#drop, #illdrop'); if (d){ e.preventDefault(); d.classList.add('over'); } }));
+  $app.addEventListener('dragleave', e=>{ const d=e.target.closest('#drop, #illdrop'); if (d) d.classList.remove('over'); });
+  $app.addEventListener('drop', e=>{ const d=e.target.closest('#drop, #illdrop'); if (!d) return; e.preventDefault(); d.classList.remove('over');
+    if (d.id==='illdrop') readIll(e.dataTransfer.files, !!S.ill); else readFiles(e.dataTransfer.files, !!S.model); });
   render();
 }
 function onClick(e){
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act;
   if (act==='home'){ S.view='home'; S.error=''; render(); return; }
+  if (act==='illopen'){ S.illOpen = true; render(); return; }
+  if (act==='illadd'){ document.getElementById('illInput').click(); return; }
+  if (act==='illclear'){ S.ill=null; S.illFiles=[]; S.illTimes=[]; S.illOpen=false; S.illWarn=''; if (S.fn==='fjernlaan'){ S.view='home'; } render(); return; }
   if (act==='pick'||act==='addfiles'){ const inp=document.getElementById('fileInput'); inp.dataset.mode = act==='addfiles' ? 'append' : 'replace'; inp.click(); return; }
-  if (act==='open'){ S.fn=b.dataset.fn; S.view='tool'; S.results=null; S.error=''; S.presetName=''; S.settings[S.fn] = sanitize(load('last:'+S.fn,null), S.fn); { const d = FUNCTIONS[S.fn].defaults(S.model); if (d.statuses.length) S.settings[S.fn].statuses = d.statuses; } render(); window.scrollTo(0,0); return; }
+  if (act==='open'){ S.fn=b.dataset.fn; S.view='tool'; S.results=null; S.error=''; S.presetName='';
+    if (FUNCTIONS[S.fn].custom){ S.settings[S.fn] = { ...FUNCTIONS[S.fn].defaults(), ...(load('last:'+S.fn,null)||{}) }; S.illTab='titler'; }
+    else { S.settings[S.fn] = sanitize(load('last:'+S.fn,null), S.fn); const d = FUNCTIONS[S.fn].defaults(S.model); if (d.statuses.length) S.settings[S.fn].statuses = d.statuses; }
+    render(); window.scrollTo(0,0); return; }
   if (act==='applymap'){ const m={}; $app.querySelectorAll('select[data-role]').forEach(s=>{ if (s.value) m[s.dataset.role]=s.value; }); S.map=m; if (missingRoles().length){ toast('De fire første kolonner skal vælges'); return; } finishLoad(); return; }
   if (act==='run'){ run(); return; }
   if (act==='help'){ e.preventDefault();
@@ -1146,6 +1463,7 @@ function onClick(e){
   if (act==='savepreset'){ const f=document.querySelector('.saveform'); const sel=document.querySelector('select[name="preset"]'); const mine=load('presets',[]).filter(p=>p.fn===S.fn); const cur = sel.value ? mine[+sel.value] : null; f.querySelector('input[name="presetName"]').value = cur ? cur.name : ''; f.querySelector('input[name="presetFav"]').checked = !!(cur && cur.fav); f.querySelector('input[name="presetFav"]').closest('.chip').classList.toggle('on', !!(cur&&cur.fav)); f.classList.remove('hidden'); f.querySelector('input[name="presetName"]').focus(); return; }
   if (act==='savecancel'){ document.querySelector('.saveform').classList.add('hidden'); return; }
   if (act==='savepreset2'){ const f=document.querySelector('.saveform'); const name=f.querySelector('input[name="presetName"]').value.trim(); if (!name){ toast('Giv indstillingen et navn'); return; } const fav=f.querySelector('input[name="presetFav"]').checked; readPanel(); const all=load('presets',[]); const i=all.findIndex(p=>p.fn===S.fn&&p.name===name); const p={name, fn:S.fn, settings:curSettings(), fav}; if (i>=0) all[i]=p; else all.push(p); store('presets',all); S.presetName=name; toast(fav?'Gemt – ligger nu på forsiden':'Gemt'); rerenderPanel(); return; }
+  if (act==='reset' && FUNCTIONS[S.fn].custom){ S.settings[S.fn] = FUNCTIONS[S.fn].defaults(); S.results=null; try{ localStorage.removeItem('hyldetjek:last:'+S.fn); }catch(err){} rerenderPanel(); refreshResults(); toast('Nulstillet'); return; }
   if (act==='reset'){ S.settings[S.fn] = FUNCTIONS[S.fn].defaults(S.model); S.presetName=''; try{ localStorage.removeItem('hyldetjek:last:'+S.fn); }catch(e){} S.results=null; S.error=''; rerenderPanel(); refreshResults(); toast('Nulstillet'); return; }
   if (act==='fav'){ const p=load('presets',[]).find(x=>x.fn===b.dataset.fn && x.name===b.dataset.name); if (!p) return; S.fn=p.fn; S.view='tool'; S.results=null; S.error=''; S.settings[S.fn]=sanitize(p.settings, S.fn); S.presetName=p.name; render(); window.scrollTo(0,0); run(); return; }
   if (act==='delpreset'){ const sel=document.querySelector('select[name="preset"]'); if (!sel.value){ toast('Vælg først en gemt indstilling'); return; } const mine=load('presets',[]).filter(p=>p.fn===S.fn); const victim=mine[+sel.value]; if (!confirm(`Slet "${victim.name}"?`)) return; store('presets', load('presets',[]).filter(p=>!(p.fn===victim.fn&&p.name===victim.name))); if (S.presetName===victim.name) S.presetName=''; toast('Slettet'); rerenderPanel(); return; }
@@ -1155,6 +1473,10 @@ function onClick(e){
   if (act==='openall'||act==='closeall'){ const all=act==='openall'; S.open = all ? new Set(S.results.map(g=>g.k)) : new Set(); document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('open',all)); return; }
   if (act==='selall'||act==='selnone'){ S.checked = act==='selall' ? new Set(S.results.flatMap(g=>g.exp.map(x=>x.id))) : new Set(); refreshResults(); return; }
   if (act==='more'){ S.shown += 150; refreshResults(); return; }
+  if (act==='illtab'){ S.illTab = b.dataset.t; S.results = null; S.shown = 100; rerenderPanel(); refreshResults(); return; }
+  if (act==='illcsv'){ illCsv(); return; }
+  if (act==='illprint'){ illPrint(); return; }
+  if (act==='stopreset'){ e.preventDefault(); store('stopord', STOP_DEFAULT); rerenderPanel(); toast('Standardlisten er sat tilbage'); return; }
   if (act==='csv'){ exportCsv(); return; }
   if (act==='dupecsv'){ downloadLines(S.dupeNrs, `hyldetjek-dobbelte-${new Date().toISOString().slice(0,10)}.csv`); toast(`${nf(S.dupeNrs.length)} materialenumre hentet`); return; }
   if (act==='print'){ printList(); return; }
@@ -1179,6 +1501,7 @@ function rerenderPanel(){
 }
 function onChange(e){
   const t = e.target;
+  if (t.matches('#illInput, #illInput2')){ const fs=[...t.files]; if (fs.length) readIll(fs, t.id==='illInput'); t.value=''; return; }
   if (t.matches('input[type=file]') && t.id!=='presetFile'){ const fs=[...t.files]; if (fs.length) readFiles(fs, t.dataset.mode==='append'); t.value=''; return; }
   if (t.matches('.chip input')){ t.closest('.chip').classList.toggle('on', t.checked); if (t.name.startsWith('base_lv')) onBaseChange(); return; }
   if (t.matches('select[name="f_klass_mode"]')){ readPanel(); rerenderPanel(); return; }
