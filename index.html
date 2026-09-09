@@ -361,7 +361,7 @@ details.base .body > p{margin:12px 0 14px}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.10.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.10.1 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -406,9 +406,10 @@ details.base .body > p{margin:12px 0 14px}
    1.9.1  changelog.html i samme udseende som værktøjet, med hver udgave foldet sammen
    1.10.0 filens alder læses af filens ændret-tidspunkt og vises på filkortet, i topbjælken og
           på hyldelisten; gul fra 24 timer, rød fra 3 døgn
+   1.10.1 alderen regnes i kalenderdage, ikke i døgn: mandag til onsdag er 2 dage
    =================================================================== */
 
-const VERSION = '1.10.0';
+const VERSION = '1.10.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -684,12 +685,13 @@ function load(k,d){ try{ const v=localStorage.getItem('hyldetjek:'+k); return v?
 
 /* ---------- filens alder ---------- */
 const DAY = 86400000;
+function dayStart(ms){ const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
 function fileAge(){
   const t = S.fileTimes.filter(x=>x); if (!t.length) return null;
   const oldest = Math.min(...t), newest = Math.max(...t);
-  const age = Date.now() - oldest;
-  return { oldest, newest, age, days: Math.floor(age/DAY),
-           level: age >= 3*DAY ? 'rod' : age >= DAY ? 'gul' : 'ok',
+  const days = Math.round((dayStart(Date.now()) - dayStart(oldest)) / DAY);   // kalenderdage, ikke døgn
+  return { oldest, newest, days,
+           level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok',
            spread: newest - oldest > 3600000 };
 }
 function whenText(ms){
@@ -701,10 +703,10 @@ function whenText(ms){
   return d.toLocaleDateString('da-DK', {weekday:'long', day:'numeric', month:'long'}) + ' kl. ' + kl;
 }
 function ageText(a){
-  if (a.level === 'ok') return 'Trukket ' + whenText(a.oldest);
-  const n = a.days;
-  const hvor = n < 1 ? 'over et døgn' : n === 1 ? '1 dag' : n + ' dage';
-  return `Filen er ${hvor} gammel – trukket ${whenText(a.oldest)}` + (a.spread ? `, den nyeste ${whenText(a.newest)}` : '');
+  const nyeste = a.spread ? `, den nyeste ${whenText(a.newest)}` : '';
+  if (a.days <= 0) return 'Trukket ' + whenText(a.oldest) + nyeste;
+  if (a.days === 1) return 'Filen er fra ' + whenText(a.oldest) + nyeste;
+  return `Filen er ${a.days} dage gammel – trukket ${whenText(a.oldest)}` + nyeste;
 }
 
 /* ---------- fil ---------- */

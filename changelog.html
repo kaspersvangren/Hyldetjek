@@ -126,6 +126,18 @@ details.rel dd{margin:2px 0 0; color:var(--ink-2)}
   <div class="rels">
   <details class="rel" open>
     <summary>
+      <span class="v">1.10.1</span>
+      <span class="h">Alderen regnes i kalenderdage</span>
+      <span class="d">9. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Dage, ikke døgn</dt><dd>En fil trukket mandag eftermiddag er onsdag formiddag “2 dage gammel”, ikke “1 dag”. Værktøjet regnede før i 24-timers-perioder; nu tæller det datoer, som man selv gør.</dd>
+      <dt>Bivirkning</dt><dd>En fil trukket i går kl. 23.50 tæller som fra i går, selvom den kun er tyve minutter gammel.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
       <span class="v">1.10.0</span>
       <span class="h">Værktøjet kan se, hvor gammel filen er</span>
       <span class="d">9. september 2026</span>
