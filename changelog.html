@@ -126,6 +126,18 @@ details.rel dd{margin:2px 0 0; color:var(--ink-2)}
   <div class="rels">
   <details class="rel" open>
     <summary>
+      <span class="v">1.15.1</span>
+      <span class="h">Rettelse: bunden af panelet lå uden for skærmen</span>
+      <span class="d">10. september 2026</span>
+      <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </summary>
+    <dl>
+      <dt>Hvad der var galt</dt><dd>Panelet fik en fuld skærms højde, uanset hvor langt nede på siden det begyndte. Var siden ikke rullet, stak den nederste del af panelet ud under skærmkanten, og panelets egen rulning kunne ikke nå den. Man skulle rulle i resultatlisten, før Find kom til syne.</dd>
+      <dt>Nu</dt><dd>Højden måles ud fra, hvor panelet faktisk begynder, og justeres, mens du ruller. Bunden af panelet er inden for skærmen hele tiden.</dd>
+    </dl>
+  </details>
+  <details class="rel">
+    <summary>
       <span class="v">1.15.0</span>
       <span class="h">Mindre scrollen – og fjernlån finder flere titler</span>
       <span class="d">10. september 2026</span>

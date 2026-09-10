@@ -206,6 +206,7 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 @media (min-width:861px){
   .panel{position:sticky; top:14px; max-height:calc(100vh - 28px); overflow-y:auto; overscroll-behavior:contain}
 }
+@media (max-width:860px){ .panel{max-height:none !important} }
 .panel .sec{padding:16px 18px; border-bottom:1px solid var(--rule-2)}
 .panel .sec:last-child{border-bottom:0}
 .panel .sec h3{display:flex; align-items:center; justify-content:space-between; font-size:.95rem}
@@ -409,7 +410,7 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.15.0 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.15.1 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -469,9 +470,11 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
    1.15.0 fjernlån matcher på titel alene når forfatteren mangler på den ene side (kan slås fra,
           og matchet er mærket i listen). Lange lister ruller i egen boks, Find og resultatets
           hoved bliver hængende, og der er en "Til toppen"-knap
+   1.15.1 rettelse: panelets højde blev sat til en fuld skærm, uanset hvor langt nede på siden
+          det begyndte, så bunden af det lå uden for skærmen indtil man rullede
    =================================================================== */
 
-const VERSION = '1.15.0';
+const VERSION = '1.15.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -985,7 +988,7 @@ function baseView(){
 }
 
 /* ---------- render ---------- */
-function render(){ $app.innerHTML = S.view==='home' ? homeView() : toolView(); bind(); }
+function render(){ $app.innerHTML = S.view==='home' ? homeView() : toolView(); bind(); if (S.fitPanel) requestAnimationFrame(S.fitPanel); }
 
 function topBar(){
   const f = S.model ? `<div class="file">${(()=>{ const a=fileAge(); return a && a.level!=='ok' ? `<span class="agedot ${a.level}" title="${esc(ageText(a))}"></span>` : ''; })()}<span class="name" title="${esc(S.fileName)}">${S.fileCount>1?S.fileCount+' filer':esc(S.fileName)}</span><span>${nf(S.model.recs.length)} materialer</span><button class="btn quiet" data-act="addfiles">Tilføj filer</button></div>` : '';
@@ -1500,9 +1503,20 @@ function bind(){ /* alt er delegeret fra $app – se init() */ }
 function init(){
   const top = document.getElementById('totop');
   top.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+  // Panelet klæber til toppen, men begynder længere nede, når siden ikke er rullet.
+  // Uden denne måling får det en fuld skærms højde og stikker ud under skærmkanten.
+  function fitPanel(){
+    const p = document.getElementById('panel');
+    if (!p || innerWidth < 861) return;
+    const t = Math.max(14, p.getBoundingClientRect().top);
+    p.style.maxHeight = (innerHeight - t - 14) + 'px';
+  }
   let tick = false;
-  addEventListener('scroll', ()=>{ if (tick) return; tick = true;
-    requestAnimationFrame(()=>{ top.classList.toggle('on', window.scrollY > 700); tick = false; }); }, {passive:true});
+  const onScroll = ()=>{ if (tick) return; tick = true;
+    requestAnimationFrame(()=>{ top.classList.toggle('on', window.scrollY > 700); fitPanel(); tick = false; }); };
+  addEventListener('scroll', onScroll, {passive:true});
+  addEventListener('resize', fitPanel);
+  S.fitPanel = fitPanel;
   $app.addEventListener('click', onClick);
   $app.addEventListener('change', onChange);
   $app.addEventListener('input', onInput);
@@ -1572,6 +1586,7 @@ function onBaseChange(){
 }
 function refreshResults(){ const el=document.getElementById('results'); const y=window.scrollY; el.innerHTML=resultsView(); window.scrollTo(0,y); }
 function rerenderPanel(){
+  if (S.fitPanel) requestAnimationFrame(S.fitPanel);
   const panel = document.getElementById('panel');
   const openSecs = [...panel.querySelectorAll('details.sec')].map(d=>d.open);
   const filters = {}; panel.querySelectorAll('.chipbox').forEach(b=>{ const f=b.querySelector('.chips-filter'); if (f && f.value) filters[b.dataset.name]=f.value; });
