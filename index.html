@@ -392,7 +392,7 @@ table.ill td.zero{color:var(--red)}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.13.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.14.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -446,9 +446,12 @@ table.ill td.zero{color:var(--red)}
           tegnet som store cirkler
    1.13.0 leveår i forfatternavne ("f. 1968", "1947-") tæller ikke længere med, når to poster
           sammenlignes; Fjernlån viser hvilke afdelinger samlingsfilen dækker
+   1.14.0 titler skrives forskelligt i fjernlånsposter og egne poster (" : " og parentes bagest);
+          det udlignes nu. Nyt flueben "samme Mat. type" under Tæl inden for samme, slået til
+          fra start. Grupper med flere materialetyper får et mærkat
    =================================================================== */
 
-const VERSION = '1.13.0';
+const VERSION = '1.14.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -496,8 +499,17 @@ function takeMarks(seg, marks, nums){
   let rest = seg; for (const x of found.slice().reverse()) rest = rest.slice(0,x.i)+' '+rest.slice(x.e);
   return rest.replace(/\(\s*\d{4}\s*,?\s*\)/,'').replace(/[\[\]]/g,'').replace(/^[\s,.;–-]+|[\s,.;–-]+$/g,'').replace(/\s+/g,' ');
 }
+// Fjernlånsposter skrives anderledes end egne poster: "Titel : undertitel" med mellemrum om
+// kolon, og tilføjelser i parentes bagest, "(Ved Tine Roesen)", hvor egne poster bruger kolon.
+const RE_HALE = /\s*\(([^()]*)\)\s*$/;
+function tidyTitle(t){
+  t = String(t||'').trim();
+  const m = RE_HALE.exec(t);
+  if (m && !/^\s*\d{4}/.test(m[1])) t = t.slice(0, m.index) + ': ' + m[1];   // årstal beholdes i parentes
+  return t.replace(/\s*:\s*/g, ': ').trim();
+}
 function titleKey(title){
-  const t = String(title||'').trim();
+  const t = tidyTitle(title);
   const segs = t.split(':').map(s=>s.trim()).filter(Boolean);
   if (!segs.length) return { key:'', stem:t, marks:[], nums:[], year:null };
   const marks=[], nums=[]; const keep=[];
@@ -609,10 +621,10 @@ function applyFilters(recs, filters){
   if (!fl.length) return recs;
   return recs.filter(x => fl.every(fn => fn(x)));
 }
-function groupBy(recs, groupLevels, useForf){
+function groupBy(recs, groupLevels, useForf, useType){
   const m = new Map();
   for (const x of recs){
-    let k = (useForf ? x.akey : '') + '|' + x.tkey;
+    let k = (useForf ? x.akey : '') + '|' + x.tkey + (useType ? '|'+norm(x.type) : '');
     for (const l of (groupLevels||[])) k += '|' + x.lv[l];
     let g = m.get(k); if (!g){ g = { k, items:[] }; m.set(k,g); }
     g.items.push(x);
@@ -646,12 +658,12 @@ const FUNCTIONS = {
       ['Fire af samme bog i hele samlingen','Sæt antallet til 4 og lad Tæl inden for samme stå tom. Så tælles på tværs af filialer, magasiner og hylder under ét.'],
       ['Kun én bestemt del af samlingen','Brug "Søg i" til at afgrænse til fx en filial eller en enkelt opstilling, før du tæller.']
     ],
-    defaults:(model)=>({ min:3, statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    defaults:(model)=>({ min:3, statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, useType:true, filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       const base = applyFilters(model.recs, s.filters);
       const st = new Set(s.statuses||[]);
       const out = [];
-      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+      for (const g of groupBy(base, s.groupLevels, s.useForf, s.useType!==false)){
         const hits = g.items.filter(x => st.has(x.status));
         if (hits.length >= (s.min||2)) out.push({ ...g, hits, exp: hits });
       }
@@ -667,13 +679,13 @@ const FUNCTIONS = {
       ['To filialer','Sæt de to steder til hver sin filial, og du får titler, der lige nu er hjemme begge steder.'],
       ['Hvilke eksemplarer kommer med i eksporten','"Kun fra det første sted" giver numrene på eksemplarerne fra det øverste sted. "Fra begge steder" giver dem alle.']
     ],
-    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, useType:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       if (!sideDefined(s.sideA) || !sideDefined(s.sideB)) return { error:'Vælg begge steder.' };
       const base = applyFilters(model.recs, s.filters);
       const st = new Set(s.statuses||[]);
       const out = [];
-      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+      for (const g of groupBy(base, s.groupLevels, s.useForf, s.useType!==false)){
         const a = g.items.filter(x => st.has(x.status) && inSide(x, s.sideA));
         const b = g.items.filter(x => st.has(x.status) && inSide(x, s.sideB));
         if (a.length && b.length){
@@ -695,14 +707,14 @@ const FUNCTIONS = {
       ['Forskellen på de to steder','Det øverste sted er dét, du vil finde bøger på: der skal stå mindst ét eksemplar, som er hjemme – og der må ikke være et hjemme nogen andre steder i samlingen. Det nederste sted er en si: titlen skal desuden have et eksemplar registreret dér, og om det står på hylden eller er udlånt, er lige meget.'],
       ['Forskellen på denne og "Hjemme her, og også dér"','Den anden funktion finder bøger, der står hjemme to steder på én gang. Denne finder bøger, hvor ét sted er det eneste sted, de er hjemme. Den ene leder efter et sammenfald, den anden efter et fravær.']
     ],
-    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, useType:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
     run(model, s){
       if (!sideDefined(s.sideA)) return { error:'Vælg stedet, der skal være hjemme.' };
       const base = applyFilters(model.recs, s.filters);
       const st = new Set(s.statuses||[]);
       const useB = sideDefined(s.sideB);
       const out = [];
-      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+      for (const g of groupBy(base, s.groupLevels, s.useForf, s.useType!==false)){
         const a = g.items.filter(x => st.has(x.status) && inSide(x, s.sideA));
         if (!a.length) continue;
         const homeElsewhere = g.items.some(x => st.has(x.status) && !inSide(x, s.sideA));
@@ -1023,6 +1035,7 @@ const HELP = {
   status:'Cicero har mange statusser, men kun "Hjemme" betyder, at bogen faktisk står på hylden. De øvrige – udlånt, i transit, bortkommet – er som regel ikke med. Vil du fx også tælle bøger, der er på vej hjem, kan du krydse dem af her.',
   min:'Hvor mange eksemplarer skal der mindst være, før titlen kommer med? 2 finder dubletter, 3 tripletter, 4 er nok til en stak på en udstilling.',
   count:'Skal eksemplarerne stå samme sted for at tælle sammen? Krydser du Opstilling og Delopstilling af, tæller kun bøger, der står side om side på samme hylde. Lader du alt stå tomt, tælles hele samlingen under ét – tre bøger fordelt på tre filialer bliver da til "3".',
+  type:'Bogen, lydbogen og storskriftudgaven af samme værk hedder ofte det samme. Med fluebenet sat tælles de hver for sig. Fjern det, hvis du vil vide, hvor mange I har af værket i alt, uanset format.',
   forf:'To forskellige bøger kan hedde det samme. Med fluebenet sat tælles "Bjørnen" af Gard Sveen og "Bjørnen" af Katrine Marie Guldager hver for sig. Fjern det kun, hvis forfatterfeltet er tomt i jeres data.',
   sideA:'Vælg først hvilken slags sted du peger på – fx Opstilling – og derefter hvilke af dem, det gælder. Du kan vælge flere.',
   sideB:'Det andet sted, der sammenlignes med. Vælg først hvilken slags sted, derefter hvilke af dem.',
@@ -1172,7 +1185,8 @@ function panelView(){
   }
   body += `<div class="sec"><h3><span class="lbl2">Tæl inden for samme… ${helpBtn('count')}</span></h3><div class="body"><div class="chips">${levelChecks(s.groupLevels)}</div>
     <p class="muted small" style="margin-top:8px">Intet valgt: der tælles på tværs af hele samlingen.</p>
-    ${m.hasForf?`<div style="display:flex; align-items:center; gap:7px; margin-top:10px"><label class="chip ${s.useForf!==false?'on':''}"><input type="checkbox" name="useForf" ${s.useForf!==false?'checked':''}> Skeln mellem forfattere med samme titel</label>${helpBtn('forf')}</div>`:''}</div></div>`;
+    ${m.hasForf?`<div style="display:flex; align-items:center; gap:7px; margin-top:10px"><label class="chip ${s.useForf!==false?'on':''}"><input type="checkbox" name="useForf" ${s.useForf!==false?'checked':''}> Skeln mellem forfattere med samme titel</label>${helpBtn('forf')}</div>`:''}
+    <div style="display:flex; align-items:center; gap:7px; margin-top:8px"><label class="chip ${s.useType!==false?'on':''}"><input type="checkbox" name="useType" ${s.useType!==false?'checked':''}> Skeln mellem materialetyper</label>${helpBtn('type')}</div></div></div>`;
   body += placeView(s.filters||{});
   body += filtersView(s.filters||{});
   body += `<div class="run"><button class="btn primary" data-act="run">Find</button><button class="btn quiet" data-act="reset" title="Sæt alle indstillinger tilbage til standard">Nulstil</button></div>`;
@@ -1198,6 +1212,7 @@ function readPanel(){
   s.statuses = vals('status');
   s.groupLevels = vals('groupLevel').map(Number);
   const uf = p.querySelector('input[name="useForf"]'); s.useForf = uf ? uf.checked : true;
+  const ut = p.querySelector('input[name="useType"]'); s.useType = ut ? ut.checked : true;
   if (S.fn==='flere'){ s.min = Math.max(2, parseInt(p.querySelector('input[name="min"]').value)||2); }
   else {
     for (const k of ['A','B']){ const f = p.querySelector(`select[name="${k}_field"]`).value; s['side'+k] = { field:f, values: f ? vals(k+'_val') : [] }; }
@@ -1280,6 +1295,7 @@ function groupView(g){
   const f = g.hits[0]||g.items[0]; const expIds = new Set(g.exp.map(x=>x.id));
   const nSel = g.exp.filter(x=>S.checked.has(x.id)).length;
   const titles = new Set(g.items.map(x=>x.titel)); const multi = titles.size>1;
+  const typer = [...new Set(g.items.map(x=>x.type).filter(Boolean))];
   const marks = f.marks.length ? `<span class="badge">${esc(f.marks.join(', '))}</span>` : '';
   const placs = [...new Set(g.hits.map(x=>x.lv.filter(Boolean).join(' / ')))];
   const placTxt = placs.length===1 ? placs[0] : placs.length+' placeringer';
@@ -1293,7 +1309,7 @@ function groupView(g){
       <button class="tog" aria-label="Fold ud">${ICON.chev}</button>
       <input type="checkbox" data-grp="${esc(g.k)}" ${nSel===g.exp.length?'checked':''} aria-label="Vælg alle i gruppen">
       <div class="main">${f.forf?`<span class="aut">${esc(f.forf)}</span>`:''}<span class="ttl">${esc(multi ? f.stem : f.titel)}</span>
-        <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} titelvarianter</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
+        <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} titelvarianter</span>`:''}${typer.length>1?`<span class="badge amber" title="${esc(typer.join(', '))}">${typer.length} materialetyper</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
       <div class="cnt">${g.hits.length}<small>${nSel} valgt</small></div></div>
     <div class="items"><div class="tblwrap"><table><thead><tr><th></th><th>Titel</th><th>Placering</th><th>Status</th><th>Gruppe</th><th>Materialenr.</th></tr></thead><tbody>${items}</tbody></table></div></div></div>`;
 }
