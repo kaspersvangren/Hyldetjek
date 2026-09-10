@@ -203,6 +203,9 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 @media (max-width:860px){.tool{grid-template-columns:1fr}}
 
 .panel{background:var(--card); border:1px solid var(--rule); border-radius:var(--radius); box-shadow:var(--shadow)}
+@media (min-width:861px){
+  .panel{position:sticky; top:14px; max-height:calc(100vh - 28px); overflow-y:auto; overscroll-behavior:contain}
+}
 .panel .sec{padding:16px 18px; border-bottom:1px solid var(--rule-2)}
 .panel .sec:last-child{border-bottom:0}
 .panel .sec h3{display:flex; align-items:center; justify-content:space-between; font-size:.95rem}
@@ -218,7 +221,8 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .panel details.sec summary .chev{transition:transform .15s; color:var(--ink-3)}
 .panel details.sec[open] summary .chev{transform:rotate(90deg)}
 .panel details.sec summary .cnt{font-weight:400; color:var(--green); font-size:.85rem}
-.panel .run{padding:16px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.panel .run{padding:16px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  position:sticky; bottom:0; background:var(--card); border-top:1px solid var(--rule-2); border-radius:0 0 var(--radius) var(--radius); z-index:3}
 .panel .run .btn.primary{flex:1; justify-content:center}
 
 .chips{display:flex; flex-wrap:wrap; gap:6px}
@@ -246,6 +250,9 @@ details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
 .chipbox:not(.collapsed) .when-closed{display:none}
 .chipbox{display:flex; flex-direction:column}
 .chipbox .chips-filter{order:1} .chipbox .chips{order:2} .chipbox .chips-tools{order:3}
+.chipbox.long:not(.collapsed) .chips{max-height:250px; overflow-y:auto; padding-right:4px; align-content:flex-start}
+.chipbox.long .chips-filter{position:sticky; top:0; z-index:2}
+.chipbox.long .chips{scrollbar-width:thin}
 .chipbox .cb-toggle{order:4; align-self:flex-start; background:none; border:0; padding:0; margin-top:8px; color:var(--green); cursor:pointer; font-weight:700; font-size:.8rem}
 .chipbox.collapsed .chips-tools:empty{display:none}
 .chips .when-closed{align-self:center; padding:5px 0}
@@ -292,6 +299,7 @@ details.base .body > p{margin:12px 0 14px}
 .results{min-height:200px}
 .results .empty{padding:48px 24px; text-align:center; color:var(--ink-2); border:1px dashed var(--rule); border-radius:var(--radius)}
 .results .empty b{display:block; color:var(--ink); margin-bottom:4px; font-size:1.05rem}
+.rsticky{position:sticky; top:0; background:var(--paper); z-index:4; padding-top:10px}
 .rhead{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:0 0 12px}
 .rhead .sum b{font-size:1.15rem}
 .rhead .sum span{color:var(--ink-2)}
@@ -345,6 +353,14 @@ table.ill td{padding:8px 10px 8px 0; border-bottom:1px solid var(--rule-2); vert
 table.ill .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
 table.ill td.num{font-weight:700}
 table.ill td.zero{color:var(--red)}
+table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; white-space:nowrap}
+.totop{position:fixed; right:22px; bottom:22px; z-index:30; display:none; align-items:center; gap:7px;
+  padding:10px 14px; border-radius:999px; border:1px solid var(--rule); background:var(--card); color:var(--ink);
+  font:inherit; font-size:.875rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow)}
+.totop.on{display:inline-flex}
+.totop:hover{border-color:var(--green); color:var(--green); background:var(--green-2)}
+.totop svg{width:15px;height:15px}
+@media print{ .totop{display:none !important} }
 .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:var(--radius-s); font-size:.9rem; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s}
 .toast.show{opacity:1}
 
@@ -389,10 +405,11 @@ table.ill td.zero{color:var(--red)}
 <body>
 <div id="app"></div>
 <div id="print"></div>
+<button id="totop" class="totop" aria-label="Til toppen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M6 12l6-6 6 6"/></svg>Til toppen</button>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.14.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.15.0 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -449,9 +466,12 @@ table.ill td.zero{color:var(--red)}
    1.14.0 titler skrives forskelligt i fjernlånsposter og egne poster (" : " og parentes bagest);
           det udlignes nu. Nyt flueben "samme Mat. type" under Tæl inden for samme, slået til
           fra start. Grupper med flere materialetyper får et mærkat
+   1.15.0 fjernlån matcher på titel alene når forfatteren mangler på den ene side (kan slås fra,
+          og matchet er mærket i listen). Lange lister ruller i egen boks, Find og resultatets
+          hoved bliver hængende, og der er en "Til toppen"-knap
    =================================================================== */
 
-const VERSION = '1.14.0';
+const VERSION = '1.15.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -738,7 +758,7 @@ const FUNCTIONS = {
       ['Forfattere','Fanen Forfattere tæller på tværs af værker, så en serie ikke skjuler sig i mange enkelttitler.'],
       ['Ord i titlerne','Fanen Ord viser de ord, der er mest overrepræsenterede i fjernlånene i forhold til jeres egne titler. Den kræver, at samlingen er lagt op, og siger kun noget om den del af samlingen, du har lagt op.']
     ],
-    defaults:()=>({ min:3, own:'alle', ownMax:1, types:[], minWord:40 }),
+    defaults:()=>({ min:3, own:'alle', ownMax:1, types:[], minWord:40, joker:true }),
   },
 };
 function pickDefault(model, field, wanted){
@@ -872,7 +892,7 @@ function buildIll(recs){
   for (const x of uniq){
     const k = x.akey + '|' + x.tkey;
     let w = works.get(k);
-    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, n:0, types:new Map(), grupper:new Map() }; works.set(k,w); }
+    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, tkey:x.tkey, n:0, types:new Map(), grupper:new Map() }; works.set(k,w); }
     w.n++;
     if (x.type) w.types.set(x.type,(w.types.get(x.type)||0)+1);
     if (x.gruppe) w.grupper.set(x.gruppe,(w.grupper.get(x.gruppe)||0)+1);
@@ -894,13 +914,28 @@ function illAge(){
 function ownIndex(){
   if (!S.model) return null;
   if (S._own && S._ownFor === S.model) return S._own;
-  const works = new Map(), authors = new Map();
+  const works = new Map(), authors = new Map(), byTitle = new Map();
   for (const x of S.model.recs){
     const k = x.akey + '|' + x.tkey;
     works.set(k, (works.get(k)||0)+1);
+    let t = byTitle.get(x.tkey);
+    if (!t){ t = { n:0, akeys:new Set() }; byTitle.set(x.tkey, t); }
+    t.n++; t.akeys.add(x.akey);
     if (x.akey){ let a = authors.get(x.akey); if (!a){ a = {ex:0, titler:new Set()}; authors.set(x.akey,a); } a.ex++; a.titler.add(x.tkey); }
   }
-  S._own = { works, authors }; S._ownFor = S.model; return S._own;
+  S._own = { works, authors, byTitle }; S._ownFor = S.model; return S._own;
+}
+// Forfatterfeltet er tomt i mange lokale poster (ophavet står i MARC-felt 700, ikke 100),
+// mens DBC sender det med på fjernlånsposten. Mangler navnet på den ene side, matches der
+// på titlen alene – og det markeres i listen.
+function ownCount(own, w, joker){
+  const exact = own.works.get(w.akey + '|' + w.tkey);
+  if (exact !== undefined) return { n: exact, joker: false };
+  if (joker){
+    const t = own.byTitle.get(w.tkey);
+    if (t && (!w.akey || t.akeys.has(''))) return { n: t.n, joker: true };
+  }
+  return { n: 0, joker: false };
 }
 function finishLoad(){
   if (missingRoles().length){ S.model=null; render(); return; }
@@ -1045,6 +1080,7 @@ const HELP = {
   filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde. Med "mellem" kan du tage et spænd af klassemærker, fx 99.1 til 99.94 – der læses tallet forrest, så "99.4 Ditlevsen, Tove" tæller som 99.4, og undergrupper som 64.125 kommer med, når du slutter ved 64.12.',
   illmin:'Hvor mange gange skal et værk være hentet hjem, før det kommer med på listen? 1 viser alt, 5 viser dem, I har lånt igen og igen.',
   illown:'Sammenligner med den samling, du har lagt op på forsiden. “Ingen eksemplarer” finder det, I slet ikke har – husk at det kun gælder den del af samlingen, der er i filen. Har du kun lagt voksenafdelingen op, ser børnebøger ud, som om I ikke har dem.',
+  joker:'Forfatterfeltet er tomt i mange lokale poster, mens fjernlånsposten fra DBC har navnet med. Mangler navnet på den ene af de to filer, matches der på titlen alene, og linjen mærkes “uden forfatter”, så du kan efterprøve den. Er forfatteren udfyldt begge steder, skal den fortsat passe.',
   illord:'Ordene sammenlignes med jeres egne titler: et ord kommer højt op, hvis det fylder meget mere i fjernlånene end på jeres hylder. Listen “ord der springes over” kan du rette i – ét ord pr. mellemrum.',
   alder:'Filen er et øjebliksbillede af samlingen, da du trak den. Siden da kan materialer være udlånt, afleveret, flyttet eller kasseret. Jo ældre filen er, jo større er risikoen for, at listen ikke passer med hylden – at du går forgæves efter en bog, eller masseretter numre, der har ændret sig.',
   presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
@@ -1082,10 +1118,10 @@ function sortTools(field, name){
 }
 function chipList(field, selected, name, opts={}){
   const vals = sortVals(field, name, S.model.fields[field].values); const sel = new Set(selected||[]);
-  const many = vals.length > 40; const col = !!opts.collapsible && !S.chipOpen.has(name);
+  const many = vals.length > 15; const col = !!opts.collapsible && !S.chipOpen.has(name); const long = vals.length > 12;
   const chips = vals.map(([v,n]) => `<label class="chip ${sel.has(v)?'on':''} ${col&&!sel.has(v)?'hid':''}" data-v="${esc(v)}"><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.has(v)?'checked':''}> ${esc(disp(v))} <span class="n">${nf(n)}</span></label>`).join('');
   const unit = opts.unit || 'værdier';
-  return `<div class="chipbox ${col?'collapsed':''}" data-name="${name}">${vals.length>1?`<div class="chips-top when-open">${sortTools(field,name)}</div>`:''}${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
+  return `<div class="chipbox ${col?'collapsed':''} ${long?'long':''}" data-name="${name}">${vals.length>1?`<div class="chips-top when-open">${sortTools(field,name)}</div>`:''}${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
     <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${opts.collapsible?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${col?(opts.expandLabel || `Vis alle ${vals.length} ${unit}`):'Skjul'}</button>`:''}</div>`;
 }
 function levelChecks(sel){
@@ -1158,7 +1194,8 @@ function illPanelView(){
         <label><input type="radio" name="illown" value="alle" ${s.own==='alle'?'checked':''}> ligegyldigt</label>
         <label><input type="radio" name="illown" value="ingen" ${s.own==='ingen'?'checked':''}> ingen eksemplarer</label>
         <label><input type="radio" name="illown" value="hoejst" ${s.own==='hoejst'?'checked':''}> højst <input type="number" name="illownmax" min="0" max="99" value="${s.ownMax}" style="width:4.5em"> eksemplarer</label>
-      </div>` : `<p class="muted small">Læg samlingen op på forsiden, så kan du sammenligne med jeres egen beholdning.</p>`}
+      </div>
+      <div style="display:flex; align-items:center; gap:7px; margin-top:12px"><label class="chip ${s.joker!==false?'on':''}"><input type="checkbox" name="illjoker" ${s.joker!==false?'checked':''}> Match på titel alene, når forfatteren mangler</label>${helpBtn('joker')}</div>` : `<p class="muted small">Læg samlingen op på forsiden, så kan du sammenligne med jeres egen beholdning.</p>`}
     </div></div>
     ${types.length>1?`<div class="sec"><h3>Mat. type</h3><div class="body"><div class="chips">${types.map(([v,n])=>`<label class="chip ${(s.types||[]).includes(v)?'on':''}"><input type="checkbox" name="illtype" value="${esc(v)}" ${(s.types||[]).includes(v)?'checked':''}> ${esc(v)} <span class="n">${nf(n)}</span></label>`).join('')}</div><p class="muted small" style="margin-top:8px">Intet valgt: alle typer.</p></div></div>`:''}
     ${S.illTab==='ord'?`<div class="sec"><h3><span class="lbl2">Ord ${helpBtn('illord')}</span></h3><div class="body">
@@ -1199,6 +1236,7 @@ function readIllPanel(){
   s.min = Math.max(1, parseInt(p.querySelector('input[name="illmin"]').value)||1);
   const o = p.querySelector('input[name="illown"]:checked'); s.own = o ? o.value : 'alle';
   const om = p.querySelector('input[name="illownmax"]'); if (om) s.ownMax = Math.max(0, parseInt(om.value)||0);
+  const jk = p.querySelector('input[name="illjoker"]'); if (jk) s.joker = jk.checked;
   s.types = [...p.querySelectorAll('input[name="illtype"]:checked')].map(i=>i.value);
   const mw = p.querySelector('input[name="illminword"]'); if (mw) s.minWord = Math.max(5, parseInt(mw.value)||5);
   const st = p.querySelector('textarea[name="stopord"]');
@@ -1259,10 +1297,10 @@ function illResultsView(){
       ? `<tr><td><b>${esc(r.w)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.own)}</td><td class="num">${r.lift>=10?Math.round(r.lift):r.lift.toFixed(1)}×</td></tr>`
       : S.illTab==='forfattere'
         ? `<tr><td><b>${esc(r.forf)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.works)}</td>${own?`<td class="num">${nf(r.ownT)}</td><td class="num">${nf(r.ownEx)}</td>`:''}</tr>`
-        : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}</td>`:''}</tr>`
+        : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}${r.joker?`<span class="badge amber jk" title="Forfatteren mangler i den ene af de to filer, så der er matchet på titlen alene">uden forfatter</span>`:''}</td>`:''}</tr>`
     ).join('');
-  return tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
-      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div>
+  return `<div class="rsticky">` + tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
+      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div></div>
     <div class="tblwrap"><table class="ill">${`<thead>${head}</thead>`}<tbody>${rows}</tbody></table></div>
     ${R.rows.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(R.rows.length-S.shown)} tilbage)</button></div>`:''}`;
 }
@@ -1274,10 +1312,10 @@ function resultsView(){
   const total = R.reduce((a,g)=>a+g.exp.length,0); const sel = S.checked.size;
   const sorted = sortGroups(R);
   const rows = sorted.slice(0,S.shown).map(groupView).join('');
-  return `<div class="rhead"><div class="sum"><b>${nf(R.length)} ${R.length===1?'titel':'titler'}</b> <span>· ${nf(total)} eksemplarer, ${nf(sel)} valgt</span></div>
+  return `<div class="rsticky"><div class="rhead"><div class="sum"><b>${nf(R.length)} ${R.length===1?'titel':'titler'}</b> <span>· ${nf(total)} eksemplarer, ${nf(sel)} valgt</span></div>
     <div class="acts"><button class="btn" data-act="print" ${sel?'':'disabled'}>${ICON.print} Hyldeliste</button><button class="btn primary" data-act="csv" ${sel?'':'disabled'}>${ICON.down} CSV til Cicero</button></div></div>
     <div class="rtools"><button data-act="selall">Vælg alle</button><button data-act="selnone">Fravælg alle</button><button data-act="openall">Fold alle ud</button><button data-act="closeall">Fold sammen</button>
-      <div class="sort"><span>Sortér efter</span><select name="sort"><option value="forf" ${S.sort==='forf'?'selected':''}>forfatter</option><option value="titel" ${S.sort==='titel'?'selected':''}>titel</option><option value="antal" ${S.sort==='antal'?'selected':''}>antal</option><option value="plac" ${S.sort==='plac'?'selected':''}>placering</option></select></div></div>
+      <div class="sort"><span>Sortér efter</span><select name="sort"><option value="forf" ${S.sort==='forf'?'selected':''}>forfatter</option><option value="titel" ${S.sort==='titel'?'selected':''}>titel</option><option value="antal" ${S.sort==='antal'?'selected':''}>antal</option><option value="plac" ${S.sort==='plac'?'selected':''}>placering</option></select></div></div></div>
     <div class="grps">${rows}</div>
     ${sorted.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(sorted.length-S.shown)} tilbage)</button></div>`:''}`;
 }
@@ -1320,15 +1358,15 @@ function illRun(){
   const s = curSettings(); const own = ownIndex();
   const typeSet = new Set(s.types||[]);
   const keep = w => !typeSet.size || [...w.types.keys()].some(t=>typeSet.has(t));
-  const ownOf = w => own ? (own.works.get(w.k)||0) : null;
+  const ownOf = w => own ? ownCount(own, w, s.joker!==false) : null;
   const passOwn = c => !own || s.own==='alle' || (s.own==='ingen' ? c===0 : c<=s.ownMax);
   let rows = [], note = '';
   if (S.illTab === 'titler'){
     for (const w of S.ill.works.values()){
       if (w.n < s.min || !keep(w)) continue;
-      const c = ownOf(w); if (!passOwn(c)) continue;
+      const c = ownOf(w); if (!passOwn(c ? c.n : null)) continue;
       const t = [...w.types.entries()].sort((a,b)=>b[1]-a[1])[0];
-      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c, type: t?t[0]:'' });
+      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c?c.n:null, joker:!!(c&&c.joker), type: t?t[0]:'' });
     }
     rows.sort((a,b)=> b.n-a.n || (a.forf||'').localeCompare(b.forf||'','da'));
     note = `· ${nf(rows.reduce((a,r)=>a+r.n,0))} fjernlån i alt`;
@@ -1394,7 +1432,7 @@ function illRowsForOutput(){
   const own = ownIndex();
   if (S.illTab==='ord') return { head:['Ord','Fjernlån','Egne titler','Overrepræsentation'], rows:R.rows.map(r=>[r.w,r.n,r.own,(Math.round(r.lift*10)/10)+'x']) };
   if (S.illTab==='forfattere') return { head:['Forfatter','Fjernlån','Værker'].concat(own?['Egne titler','Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.n,r.works].concat(own?[r.ownT,r.ownEx]:[])) };
-  return { head:['Forfatter','Titel','Type','Fjernlån'].concat(own?['Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.titel,r.type,r.n].concat(own?[r.own]:[])) };
+  return { head:['Forfatter','Titel','Type','Fjernlån'].concat(own?['Egne eksemplarer','Matchet uden forfatter']:[]), rows:R.rows.map(r=>[r.forf,r.titel,r.type,r.n].concat(own?[r.own, r.joker?'ja':'']:[])) };
 }
 function illCsv(){
   const d = illRowsForOutput(); if (!d) return;
@@ -1460,6 +1498,11 @@ function printList(){
 /* ---------- events ---------- */
 function bind(){ /* alt er delegeret fra $app – se init() */ }
 function init(){
+  const top = document.getElementById('totop');
+  top.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+  let tick = false;
+  addEventListener('scroll', ()=>{ if (tick) return; tick = true;
+    requestAnimationFrame(()=>{ top.classList.toggle('on', window.scrollY > 700); tick = false; }); }, {passive:true});
   $app.addEventListener('click', onClick);
   $app.addEventListener('change', onChange);
   $app.addEventListener('input', onInput);
