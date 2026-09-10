@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyldetjek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --paper:#F6F7F4;
+  --card:#FFFFFF;
+  --ink:#1E2A36;
+  --ink-2:#4A5763;
+  --ink-3:#7C8792;
+  --rule:#D9DED8;
+  --rule-2:#EDEFEA;
+  --green:#2F6B4F;
+  --green-2:#E4F0EA;
+  --green-3:#1F4D38;
+  --amber:#B9861E;
+  --amber-2:#FBF1DC;
+  --red:#A63D2F;
+  --red-2:#F8E5E1;
+  --focus:#2F6B4F;
+  --radius:10px;
+  --radius-s:6px;
+  --shadow:0 1px 2px rgba(30,42,54,.06), 0 4px 16px rgba(30,42,54,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151A1F; --card:#1E252C; --ink:#EDEFEA; --ink-2:#B9C1C8; --ink-3:#7F8A94;
+    --rule:#334049; --rule-2:#28323A;
+    --green:#6FB58F; --green-2:#213A2E; --green-3:#9AD1B3;
+    --amber:#E0B25A; --amber-2:#3A3120;
+    --red:#E08B7D; --red-2:#402420;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+    --paper:#151A1F; --card:#1E252C; --ink:#EDEFEA; --ink-2:#B9C1C8; --ink-3:#7F8A94;
+    --rule:#334049; --rule-2:#28323A;
+    --green:#6FB58F; --green-2:#213A2E; --green-3:#9AD1B3;
+    --amber:#E0B25A; --amber-2:#3A3120;
+    --red:#E08B7D; --red-2:#402420;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+html{font-size:16px}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--green)}
+button{font:inherit; color:inherit}
+h1,h2,h3{margin:0; font-weight:700; line-height:1.2}
+h1{font-size:1.9rem; letter-spacing:-.01em}
+h2{font-size:1.25rem}
+h3{font-size:1rem}
+p{margin:0}
+.muted{color:var(--ink-2)}
+.small{font-size:.875rem}
+.hidden{display:none !important}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px; border-radius:4px}
+
+.wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+/* ---------- top bar ---------- */
+.top{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:18px 0 14px; border-bottom:1px solid var(--rule);
+}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); background:none; border:0; padding:0; cursor:pointer}
+.brand svg{width:28px; height:28px; display:block}
+.brand b{font-size:1.15rem; letter-spacing:-.01em}
+.top .ver{font-size:.75rem; color:var(--ink-3); text-decoration:none; align-self:flex-end; padding:2px 6px 3px; border-radius:4px; margin-right:auto}
+@media (max-width:600px){ .top .ver{display:none} }
+.top .ver:hover{color:var(--green); background:var(--green-2)}
+.top .file{display:flex; align-items:center; gap:12px; font-size:.9rem; color:var(--ink-2); min-width:0}
+.top .file .btn{white-space:nowrap}
+@media (max-width:600px){ .top .file > span:not(.name):not(.agedot){display:none} .top .file .name{max-width:9em} }
+.top .file .name{font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:10px 16px;
+  border-radius:var(--radius-s); border:1px solid var(--rule); background:var(--card);
+  cursor:pointer; font-weight:700; line-height:1.2; transition:background .12s, border-color .12s;
+}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--green); border-color:var(--green); color:#fff}
+.btn.primary:hover{background:var(--green-3); border-color:var(--green-3)}
+.btn.quiet{background:transparent; border-color:transparent; color:var(--green); padding:6px 8px}
+.btn.quiet:hover{background:var(--green-2); border-color:transparent}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn svg{width:18px; height:18px}
+
+/* ---------- home ---------- */
+.home{display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,42%); gap:34px; align-items:start; padding:44px 0 30px}
+@media (max-width:900px){ .home{grid-template-columns:1fr; gap:24px; padding-top:32px} }
+.hero h1{text-wrap:balance}
+.hero p{margin-top:10px; font-size:1.05rem; color:var(--ink-2); max-width:46ch}
+.slots{display:flex; flex-direction:column; gap:14px}
+
+.drop{padding:26px 22px; text-align:center; display:block;
+  border:2px dashed var(--rule); border-radius:var(--radius); background:var(--card);
+  cursor:pointer; transition:border-color .12s, background .12s;}
+.drop:hover, .drop.over{border-color:var(--green); background:var(--green-2)}
+.drop strong{font-size:1rem}
+.drop .sub{margin-top:6px; color:var(--ink-2); font-size:.9rem}
+.drop .sub2{margin-top:10px; font-size:.82rem; color:var(--ink-3)}
+.drop input{display:none}
+.drop.small{padding:20px 18px}
+
+.loaded{padding:16px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  border-radius:var(--radius); background:var(--card); border:1px solid var(--rule); box-shadow:var(--shadow);}
+.loaded.over{border-color:var(--green); background:var(--green-2)}
+.loaded > .cardico{width:34px; height:34px; border-radius:50%; background:var(--green-2); color:var(--green); display:grid; place-items:center; flex:none}
+.loaded > .cardico svg{width:18px;height:18px}
+.loaded.ill > .cardico{background:var(--amber-2); color:var(--amber)}
+.loaded.ill .age.ok{color:var(--ink-2)}
+.loaded .facts{flex:1; min-width:150px}
+.loaded .facts b{display:block; font-size:1rem}
+.loaded .facts span{color:var(--ink-2); font-size:.875rem}
+.loaded .acts{display:flex; gap:8px; flex-wrap:wrap}
+.loaded .acts .btn{padding:8px 12px; font-size:.875rem}
+.loaded .age{flex-basis:100%; display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--ink-2); order:4; position:relative; z-index:1}
+.loaded .age.gul{color:var(--amber); font-weight:700}
+.loaded .age.rod{color:var(--red); font-weight:700}
+.loaded .age .help{border-color:currentColor; color:inherit; background:transparent}
+.loaded .helptext{order:5; flex-basis:100%; margin:0}
+.loaded .filelist{order:6; flex-basis:100%; display:flex; flex-wrap:wrap; gap:5px 10px; font-size:.8rem; color:var(--ink-3); border-top:1px solid var(--rule-2); padding-top:9px}
+.loaded .filelist:empty{display:none}
+.fchip{display:inline-flex; align-items:center; gap:5px; white-space:nowrap; cursor:default}
+.fdot{width:12px; height:12px; border-radius:50%; display:inline-grid; place-items:center; font-size:9px; font-weight:700; line-height:1; color:#fff; flex:none}
+.fdot.ok{background:var(--green)}
+.fdot.gul{background:var(--amber)}
+.fdot.rod{background:var(--red)}
+.fdot.none{background:var(--rule); color:var(--ink-2)}
+
+.illslot{margin:0}
+.illadd{width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; padding:14px 18px;
+  background:var(--card); border:1px dashed var(--rule); border-radius:var(--radius); cursor:pointer; text-align:left}
+.illadd:hover{border-color:var(--green); background:var(--green-2)}
+.illadd svg{width:22px;height:22px;color:var(--green)}
+.illadd b{display:block; font-size:.95rem}
+.illadd i{font-style:normal; color:var(--ink-2); font-size:.85rem}
+.illadd .go{color:var(--green); font-weight:700; white-space:nowrap; font-size:.875rem}
+
+.foot{margin:0 0 64px}
+.warn{margin:14px 0 0; padding:12px 16px; border-radius:var(--radius-s); background:var(--amber-2); color:var(--ink); border-left:4px solid var(--amber); font-size:.9rem}
+.err{margin:0 0 24px; padding:12px 16px; border-radius:var(--radius-s); background:var(--red-2); border-left:4px solid var(--red); font-size:.925rem}
+.linkbtn{background:none; border:0; padding:0; color:var(--green); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:2px}
+
+.fns{list-style:none; margin:0 0 34px; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(330px,1fr)); gap:14px}
+.fns li{border:1px solid var(--rule); border-radius:var(--radius); background:var(--card); display:flex; flex-direction:column}
+.fns li.off{background:transparent; border-style:dashed}
+.fn{display:grid; grid-template-columns:auto 1fr; gap:2px 14px; align-items:center;
+  width:100%; padding:18px; background:none; border:0; text-align:left; cursor:pointer; border-radius:var(--radius); flex:1}
+.fn:hover:not(:disabled){background:var(--green-2)}
+.fn:disabled{cursor:default}
+.fn:disabled .ico,.fn:disabled .t,.fn:disabled .d{opacity:.5}
+.fn .ico{width:40px; height:40px; border-radius:var(--radius-s); background:var(--green-2); color:var(--green); display:grid; place-items:center; grid-row:1/3}
+.fn .ico svg{width:22px; height:22px}
+.fn .t{font-size:1.05rem; font-weight:700; align-self:end}
+.fn .d{color:var(--ink-2); font-size:.9rem; align-self:start}
+.fn .d i{font-style:normal; color:var(--ink-3)}
+.favs{display:flex; flex-wrap:wrap; gap:6px; padding:0 18px 16px}
+.fav{display:inline-flex; align-items:center; gap:6px; padding:5px 12px 5px 9px; border-radius:999px;
+  border:1px solid var(--rule); background:var(--paper); font-size:.85rem; font-weight:700; color:var(--ink); cursor:pointer}
+.fav:hover{border-color:var(--green); background:var(--green-2); color:var(--green-3)}
+.fav svg{width:14px;height:14px;color:var(--amber)}
+
+.mapping{margin:0; padding:20px 22px; border-radius:var(--radius); background:var(--card); border:1px solid var(--rule)}
+.mapping h3{margin-bottom:6px}
+.mapping .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px 18px; margin-top:14px}
+.mapping label{display:flex; flex-direction:column; gap:4px; font-size:.9rem}
+.mapping select{padding:8px; border-radius:var(--radius-s); border:1px solid var(--rule); background:var(--paper); color:var(--ink); font:inherit}
+
+/* ---------- tool ---------- */
+.toolhead{padding:22px 0 18px; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap}
+.toolhead .back{display:inline-flex; align-items:center; gap:6px; color:var(--ink-2); text-decoration:none; background:none; border:0; padding:0; cursor:pointer; font-size:.925rem; margin-bottom:8px}
+.toolhead .back:hover{color:var(--green)}
+.toolhead .back svg{width:16px;height:16px}
+.toolhead .explain{color:var(--ink-2); max-width:60ch; margin-top:4px}
+details.howto{margin-top:14px; max-width:68ch; border:1px solid var(--rule); border-radius:var(--radius); background:var(--card)}
+details.howto summary{list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; font-weight:700; font-size:.925rem}
+details.howto summary::-webkit-details-marker{display:none}
+details.howto summary .chev{color:var(--ink-3); transition:transform .15s; display:flex}
+details.howto summary .chev svg{width:16px;height:16px}
+details.howto[open] summary .chev{transform:rotate(90deg)}
+details.howto .lead{margin:0; padding:12px 16px 0; border-top:1px solid var(--rule-2); color:var(--ink-2); font-size:.9rem}
+details.howto dl{margin:0; padding:2px 16px 16px}
+details.howto dt{font-weight:700; font-size:.9rem; margin-top:12px}
+details.howto dd{margin:2px 0 0; color:var(--ink-2); font-size:.925rem}
+
+.tool{display:grid; grid-template-columns:340px minmax(0,1fr); gap:28px; align-items:start; padding-bottom:64px}
+@media (max-width:860px){.tool{grid-template-columns:1fr}}
+
+.panel{background:var(--card); border:1px solid var(--rule); border-radius:var(--radius); box-shadow:var(--shadow)}
+.panel .sec{padding:16px 18px; border-bottom:1px solid var(--rule-2)}
+.panel .sec:last-child{border-bottom:0}
+.panel .sec h3{display:flex; align-items:center; justify-content:space-between; font-size:.95rem}
+.panel .sec h3 .hint{font-weight:400; color:var(--ink-3); font-size:.8rem}
+.panel .sec h3 .lbl2{display:flex; align-items:center; gap:7px}
+.help{width:18px; height:18px; flex:none; border-radius:50%; border:1px solid var(--rule); background:var(--card); color:var(--ink-3); font-size:.72rem; font-weight:700; line-height:1; cursor:pointer; padding:0; display:inline-grid; place-items:center}
+.help:hover, .help.on{border-color:var(--green); color:var(--green); background:var(--green-2)}
+.helptext{margin:10px 0 0; padding:10px 12px; border-left:3px solid var(--green); background:var(--green-2); color:var(--ink); border-radius:0 var(--radius-s) var(--radius-s) 0; font-size:.875rem; line-height:1.45}
+.side .lbl{align-items:center}
+.panel .sec .body{margin-top:10px}
+.panel details.sec summary{cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:.95rem}
+.panel details.sec summary::-webkit-details-marker{display:none}
+.panel details.sec summary .chev{transition:transform .15s; color:var(--ink-3)}
+.panel details.sec[open] summary .chev{transform:rotate(90deg)}
+.panel details.sec summary .cnt{font-weight:400; color:var(--green); font-size:.85rem}
+.panel .run{padding:16px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.panel .run .btn.primary{flex:1; justify-content:center}
+
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 10px 5px 8px; border-radius:999px;
+  border:1px solid var(--rule); background:var(--paper); cursor:pointer; font-size:.875rem; user-select:none;
+}
+.chip input{margin:0; accent-color:var(--green)}
+.chip .n{color:var(--ink-3); font-size:.78rem}
+.chip.on{background:var(--green-2); border-color:var(--green); color:var(--green-3)}
+.chip.on .n{color:var(--green)}
+.chips-tools{display:flex; gap:12px; margin-top:8px; font-size:.8rem; align-items:center}
+.sorttools{margin-left:auto; display:inline-flex; gap:4px; align-items:center}
+.chips-top{display:flex; justify-content:flex-end; margin-bottom:6px}
+.chipbox.collapsed .chips-top{display:none}
+.lvlhead{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+.lvlhead b{font-size:.9rem}
+.lvlrow .chips-top{grid-column:1/-1; margin:0 0 2px}
+.sorttools button{border:1px solid var(--rule); background:var(--card); color:var(--ink-2); border-radius:var(--radius-s); padding:2px 7px; font-size:.75rem; font-weight:700; cursor:pointer; line-height:1.4}
+.sorttools button:hover{border-color:var(--green); color:var(--green)}
+.lvlrow .sorttools{margin-left:auto}
+.chipbox.collapsed .chip.hid{display:none}
+.chipbox.collapsed .chips-filter{display:none}
+.chipbox.collapsed .when-open{display:none}
+.chipbox:not(.collapsed) .when-closed{display:none}
+.chipbox{display:flex; flex-direction:column}
+.chipbox .chips-filter{order:1} .chipbox .chips{order:2} .chipbox .chips-tools{order:3}
+.chipbox .cb-toggle{order:4; align-self:flex-start; background:none; border:0; padding:0; margin-top:8px; color:var(--green); cursor:pointer; font-weight:700; font-size:.8rem}
+.chipbox.collapsed .chips-tools:empty{display:none}
+.chips .when-closed{align-self:center; padding:5px 0}
+.lvlrow{display:grid; grid-template-columns:1fr auto; gap:6px 10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--rule-2)}
+.lvlrow:last-child{border-bottom:0}
+.lvlrow > b{font-size:.875rem; color:var(--ink-2); grid-column:1; grid-row:1}
+.lvlrow .chipbox{display:contents}
+.lvlrow .chipbox .cb-toggle{grid-column:2; grid-row:1; margin:0}
+.lvlrow .chipbox .chips-filter{grid-column:1/-1}
+.lvlrow .chipbox .chips-top{grid-column:1/-1; justify-content:flex-start}
+.lvlrow .chipbox .chips{grid-column:1/-1}
+.lvlrow .chipbox .chips:empty{display:none}
+.lvlrow .chipbox.collapsed .chips-tools{display:none}
+.lvlrow .chipbox .chips-tools{grid-column:1/-1; margin:0}
+.panel details.sec summary .chev svg{width:16px;height:16px;display:block}
+details.base{margin:0; background:var(--card); border:1px solid var(--rule); border-radius:var(--radius); padding:0 20px}
+details.base summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:14px 0; font-weight:700}
+details.base summary::-webkit-details-marker{display:none}
+details.base summary .hint{font-weight:400; color:var(--green); font-size:.875rem; flex:1}
+details.base summary .chev{color:var(--ink-3); transition:transform .15s}
+details.base summary .chev svg{width:16px;height:16px}
+details.base[open] summary .chev{transform:rotate(90deg)}
+details.base .body{padding:4px 0 18px; border-top:1px solid var(--rule-2)}
+details.base .body > p{margin:12px 0 14px}
+.chips-tools button{background:none; border:0; padding:0; color:var(--green); cursor:pointer; font-weight:700}
+.chips-filter{width:100%; padding:7px 10px; margin-bottom:8px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); color:var(--ink); font:inherit; font-size:.875rem}
+.fieldrow{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px}
+.fieldrow select,.fieldrow input[type=text],.fieldrow input[type=number]{
+  padding:7px 10px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); color:var(--ink); font:inherit; font-size:.9rem;
+}
+.fieldrow input[type=number]{width:74px}
+.fieldrow label{font-size:.9rem}
+.levelgrid{display:grid; grid-template-columns:1fr; gap:14px}
+.levelgrid .lvl b{display:block; font-size:.85rem; margin-bottom:6px; color:var(--ink-2)}
+.side{padding:12px; border:1px solid var(--rule); border-radius:var(--radius-s); margin-bottom:10px; background:var(--paper)}
+.side .lbl{font-weight:700; font-size:.9rem; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between}
+.side .lbl .opt{font-weight:400; color:var(--ink-3); font-size:.8rem}
+.side .chips .chip{background:var(--card)}
+.radio{display:flex; gap:14px; flex-wrap:wrap; font-size:.9rem}
+.radio label{display:flex; align-items:center; gap:6px; cursor:pointer}
+.radio input{accent-color:var(--green)}
+
+/* ---------- results ---------- */
+.results{min-height:200px}
+.results .empty{padding:48px 24px; text-align:center; color:var(--ink-2); border:1px dashed var(--rule); border-radius:var(--radius)}
+.results .empty b{display:block; color:var(--ink); margin-bottom:4px; font-size:1.05rem}
+.rhead{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:0 0 12px}
+.rhead .sum b{font-size:1.15rem}
+.rhead .sum span{color:var(--ink-2)}
+.rhead .acts{display:flex; gap:8px; flex-wrap:wrap}
+.rtools{display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:.85rem; padding:8px 0 10px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule)}
+.rtools button{background:none;border:0;padding:0;color:var(--green);cursor:pointer;font-weight:700}
+.rtools .sort{margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--ink-2)}
+.rtools .sort select{padding:4px 6px; border:1px solid var(--rule); border-radius:4px; background:var(--card); color:var(--ink); font:inherit; font-size:.85rem}
+
+.grp{border-bottom:1px solid var(--rule)}
+.grp .row{display:grid; grid-template-columns:auto auto 1fr auto; gap:12px; align-items:center; padding:12px 6px; cursor:pointer}
+.grp .row:hover{background:var(--card)}
+.grp .row .tog{width:22px;height:22px;display:grid;place-items:center;color:var(--ink-3);border:0;background:none;padding:0}
+.grp .row .tog svg{width:14px;height:14px;transition:transform .15s}
+.grp.open .row .tog svg{transform:rotate(90deg)}
+.grp .row input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--green);cursor:pointer}
+.grp .main{min-width:0}
+.grp .main .aut{font-weight:700; display:block; line-height:1.35}
+.grp .main .ttl{color:var(--ink-2); display:block; line-height:1.35}
+.grp .main .meta{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; font-size:.8rem}
+.badge{display:inline-flex; align-items:center; padding:1px 8px; border-radius:999px; background:var(--rule-2); color:var(--ink-2); white-space:nowrap}
+.badge.amber{background:var(--amber-2); color:var(--amber)}
+.badge.green{background:var(--green-2); color:var(--green-3)}
+.grp .cnt{font-weight:700; font-size:1.2rem; text-align:right; min-width:2.2em}
+.grp .cnt small{display:block; font-weight:400; font-size:.72rem; color:var(--ink-3); line-height:1}
+.grp .items{display:none; padding:0 6px 12px 46px}
+.grp.open .items{display:block}
+.items table{width:100%; border-collapse:collapse; font-size:.875rem}
+.items th{text-align:left; font-weight:400; color:var(--ink-3); padding:4px 8px 6px 0; border-bottom:1px solid var(--rule-2); font-size:.78rem}
+.items td{padding:6px 8px 6px 0; border-bottom:1px solid var(--rule-2); vertical-align:top}
+.items tr:last-child td{border-bottom:0}
+.items td.chk{width:26px}
+.items td.chk input{accent-color:var(--green); margin:0; width:16px; height:16px}
+.items td.nr{font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--ink-2)}
+.items td.st .badge{font-size:.78rem}
+.items tr.dim td{color:var(--ink-3)}
+.items tr.dim td.chk{visibility:hidden}
+.items .ed{color:var(--ink-3); font-style:italic}
+.tblwrap{overflow-x:auto}
+.more{padding:14px 0 30px; text-align:center}
+
+.cov{margin:0 0 12px; padding:9px 11px; border-radius:var(--radius-s); background:var(--rule-2); color:var(--ink-2); font-size:.85rem; line-height:1.45}
+.cov.smal{background:var(--amber-2); color:var(--ink); border-left:3px solid var(--amber)}
+.tabs{display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--rule)}
+.tab{background:none; border:0; border-bottom:2px solid transparent; padding:8px 14px; cursor:pointer; font-weight:700; color:var(--ink-2); margin-bottom:-1px}
+.tab:hover{color:var(--green)}
+.tab.on{color:var(--green); border-bottom-color:var(--green)}
+table.ill{width:100%; border-collapse:collapse; font-size:.925rem}
+table.ill th{text-align:left; font-weight:400; color:var(--ink-3); font-size:.78rem; padding:4px 10px 6px 0; border-bottom:1px solid var(--rule)}
+table.ill td{padding:8px 10px 8px 0; border-bottom:1px solid var(--rule-2); vertical-align:top}
+table.ill .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.ill td.num{font-weight:700}
+table.ill td.zero{color:var(--red)}
+.toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:var(--radius-s); font-size:.9rem; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s}
+.toast.show{opacity:1}
+
+/* presets */
+.presets{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.presets select{flex:1 0 100%; min-width:120px; padding:7px 10px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); color:var(--ink); font:inherit; font-size:.9rem}
+.presets .btn{padding:7px 10px; font-size:.85rem; flex:1; justify-content:center}
+.saveform{margin-top:10px; padding:12px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); display:flex; flex-direction:column; gap:10px}
+.saveform input[type=text]{padding:8px 10px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--card); color:var(--ink); font:inherit; font-size:.9rem}
+.saveform .chip{background:var(--card)}
+.saveform .saveacts{display:flex; gap:8px} .saveform .saveacts .btn{padding:7px 12px; font-size:.85rem}
+.run .btn.quiet{flex:0}
+.favs{display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 16px 70px; margin-top:-8px}
+.fav{display:inline-flex; align-items:center; gap:6px; padding:5px 12px 5px 9px; border-radius:999px; border:1px solid var(--rule); background:var(--card); font-size:.875rem; font-weight:700; color:var(--ink); cursor:pointer}
+.fav:hover{border-color:var(--green); background:var(--green-2); color:var(--green-3)}
+.fav svg{width:14px;height:14px;color:var(--amber)}
+@media (max-width:600px){.favs{padding-left:8px}}
+
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+
+/* ---------- print (hyldeliste) ---------- */
+#print{display:none}
+@media print{
+  body{background:#fff; color:#000}
+  #app{display:none !important}
+  #print{display:block; font-size:10.5pt}
+  #print h1{font-size:16pt; margin:0 0 2pt}
+  #print .pm{font-size:9pt; color:#444; margin-bottom:12pt}
+  #print h2{font-size:12pt; margin:14pt 0 4pt; border-bottom:1.5px solid #000; padding-bottom:2pt; break-after:avoid}
+  #print table{width:100%; border-collapse:collapse}
+  #print th{text-align:left; font-size:8.5pt; color:#444; font-weight:400; border-bottom:1px solid #999; padding:2pt 4pt}
+  #print td{padding:3pt 4pt; border-bottom:1px solid #ddd; vertical-align:top}
+  #print td.nr{white-space:nowrap; font-variant-numeric:tabular-nums}
+  #print td.ctx{font-size:9pt; color:#444}
+  #print td b{font-weight:700}
+  #print td.bx{width:14pt}
+  #print td.bx span{display:inline-block; width:9pt; height:9pt; border:1px solid #000}
+  #print tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="print"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* ===================================================================
+   Hyldetjek 1.13.0 (9. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
+   Versioner:
+   1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
+   1.1.0  grundopsætning (fravælg steder én gang for alle), "Søg i"-afsnit med
+          filial/afdeling/sektion/opstilling/delopstilling, statusser foldet sammen
+          med Hjemme som standard, femte placeringsniveau navngivet, versionsnummer i toppen
+   1.2.0  niveaunavne rettet til Ciceros model (Filial/Afdeling/Opstilling/Delopstilling) og
+          kan rettes af brugeren i Grundopsætningen; flere CSV-filer kan læses ind på én gang
+          (lægges sammen, dubletter på materialenummer fjernes)
+   1.3.0  niveaunavne er faste igen (Ciceros fem, Sektion kun ved fem led; blandede filer får
+          tom Sektion indsat); vælg/fravælg alle pr. niveau i Grundopsætningen; "Tilføj filer"
+          og "Start forfra" i stedet for "Vælg en anden fil", filliste på forsiden; Skjul-knappen
+          bliver på Vælg-knappens plads
+   1.4.0  Nulstil-knap i funktionerne; gemte indstillinger kan markeres som favorit og vises
+          som genveje under funktionen på forsiden (åbner og kører med det samme); Gem sker i
+          en lille linje i panelet i stedet for en dialogboks
+   1.4.1  overskriften "Tæl inden for samme…" i ét stykke
+   1.4.2  dobbelte materialenumre: rækken uden "Hjemme" beholdes; klarere besked; knap til at
+          hente numrene som CSV
+   1.5.0  ny titelnøgle: undertitler beholdes, medmindre de er genre ("roman", "krimi"…),
+          format ("mp3", storskriftserie), oversætter/udgave ("Ved …", "Ill. …") eller
+          bindangivelse. "PS: jeg elsker dig" og "PS: Jeg elsker dig for evigt" er nu to titler
+   1.5.1  "Ved …" og "Ill. …" beholdes i titlen igen – de kan betyde forskellige udvalg
+          (H.C. Andersens Eventyr), ikke kun oversætter. Kun rene udgave-led fjernes
+   1.6.0  forfatteren står først på egen linje i resultatet og på hyldelisten; hyldelisten har
+          en kolonne der viser hvor mange af titlen der er talt med, og hvor resten står
+   1.6.1  mærkatet hedder "N titelvarianter" i stedet for "N udgaver" – tallet er antallet af
+          forskellige titelstrenge, ikke et sikkert antal udgaver
+   1.7.0  hjælp overalt: hver funktion har en konkret beskrivelse og et "Sådan bruger du den"-
+          afsnit med eksempler; hvert felt i panelet har et spørgsmålstegn med forklaring
+   1.8.0  hver liste af valgmuligheder kan sorteres alfabetisk eller efter antal og vendes om;
+          delopstilling og mat. type står alfabetisk som udgangspunkt, resten efter antal
+   1.8.1  sorteringsknapperne står øverst i listen i stedet for nederst
+   1.8.2  kun tekst: "og hører også til her" hedder nu "og har også et eksemplar her", og
+          hjælpen forklarer forskellen på de to steder og på de to sammenlignende funktioner
+   1.8.3  kun tekst: vejledningerne er eksempler, ikke forskrifter – ingen antagelser om hvad
+          brugeren vil opnå
+   1.8.4  panelet foldede "Afgræns materialerne" sammen og sprang til toppen, hver gang det blev
+          tegnet om (sortering, gemte opsætninger, valg af felt). Nu bevares både åbne afsnit,
+          søgefelter i lange lister og rullepositionen
+   1.9.0  klassifikation kan afgrænses til et interval, fx 64 til 64.12 eller 99.1 til 99.94
+   1.9.1  changelog.html i samme udseende som værktøjet, med hver udgave foldet sammen
+   1.10.0 filens alder læses af filens ændret-tidspunkt og vises på filkortet, i topbjælken og
+          på hyldelisten; gul fra 24 timer, rød fra 3 døgn
+   1.10.1 alderen regnes i kalenderdage, ikke i døgn: mandag til onsdag er 2 dage
+   1.11.0 fjerde funktion: Fjernlån. Egen filplads til fjernlånseksporten, tre visninger
+          (titler, forfattere, ord), sammenligning med samlingen når den også er lagt op
+   1.12.0 forsiden er lagt om: overskrift og filer side om side, opgaverne som kort i et gitter,
+          grundopsætning og beskeder flyttet ned. Hver fil har sin egen aldersprik
+   1.12.1 rettelse: ".loaded .ok" ramte også alderslinjen og de friske filprikker, så de blev
+          tegnet som store cirkler
+   1.13.0 leveår i forfatternavne ("f. 1968", "1947-") tæller ikke længere med, når to poster
+          sammenlignes; Fjernlån viser hvilke afdelinger samlingsfilen dækker
+   =================================================================== */
+
+const VERSION = '1.13.0';
+/* ---------------- kolonner ---------------- */
+const ROLES = [
+  { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
+  { id:'titel',  label:'Titel',          req:true,  aliases:['titel','title'] },
+  { id:'nr',     label:'Materialenr.',   req:true,  aliases:['materialenr','materialenummer','stregkode','barcode','itemid'] },
+  { id:'status', label:'Status',         req:true,  aliases:['status'] },
+  { id:'forf',   label:'Forfatter',      req:false, aliases:['forfatter','author','ophav'] },
+  { id:'type',   label:'Mat. type',      req:false, aliases:['mattype','materialetype','type'] },
+  { id:'gruppe', label:'Materialegruppe',req:false, aliases:['materialegruppe','matgruppe','gruppe'] },
+  { id:'klass',  label:'Klassifikation', req:false, aliases:['klassifikation','dk5','klasse','classification'] },
+];
+function normHeader(h){ return String(h||'').toLowerCase().replace(/[^a-zæøå0-9]/g,''); }
+function autoMap(headers){
+  const map = {}; const used = new Set();
+  for (const r of ROLES){
+    for (const h of headers){
+      if (used.has(h)) continue;
+      const n = normHeader(h);
+      if (!n) continue;
+      if (r.aliases.some(a => n === a || n.startsWith(a))){ map[r.id] = h; used.add(h); break; }
+    }
+  }
+  return map;
+}
+
+/* ---------------- tekst ---------------- */
+function norm(s){ return String(s||'').normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim(); }
+function titleCase0(s){ return String(s||'').trim(); }
+
+// Titelnøgle: stamme + de undertitler, der ikke er genre/format/udgave/bind. "Ved …"/"Ill. …" beholdes (kan være forskellige udvalg). Bindnumre trækkes ud uanset notation.
+const VOL_WORDS = '(?:bind|bd|bog|del|vol|volume|part|book|nr|no|sæson|season|disc|disk|hæfte)';
+const RE_NUM_WORD = new RegExp('\\[?\\s*(\\d{1,4})\\s*\\.?\\s*\\]?\\s*\\.?\\s*\\[?\\s*\\b' + VOL_WORDS + '\\b\\.?\\s*\\]?', 'gi');
+const RE_WORD_NUM = new RegExp('\\[?\\s*\\b' + VOL_WORDS + '\\b\\.?\\s*\\]?\\s*\\.?\\s*\\[?\\s*(\\d{1,4})\\s*\\]?', 'gi');
+const RE_YEAR = /\((\d{4})\b/;
+const RE_BARE_NUM = /^\[?\s*(\d{1,4})\s*\]?$/;
+// undertitler, der beskriver samme værk (genre, format, storskriftserie) – fjernes
+const GENERIC = new Set(['roman','romaner','en roman','krimi','en krimi','kriminalroman','en kriminalroman','spændingsroman','en spændingsroman','thriller','en thriller','krimithriller','psykologisk thriller','erindringsroman','kortroman','noveller','en novelle','novelle','novellesamling','digte','digtsamling','erindringer','biografi','en biografi','selvbiografi','fortællinger','fortælling','en fortælling','essays','essay','eventyr','skuespil','dagbog','breve','en kærlighedshistorie','en roman om en forbrydelse','en antologi','antologi','a novel','novel','stories','poems','a memoir','memoir','a thriller','mp3','lydbog','stor skrift','storskrift','magnaprintserien','magnumbøger','magnaprint','modtryks storskriftserie','storskriftserie','let læst','letlæst']);
+const RE_EDITION = /^(nyoversat udgave|moderne retskrivning|ny retskrivning|\d+\. (rev\.? )?(udg|udgave|oplag)\.?)$/i;
+function takeMarks(seg, marks, nums){
+  const found=[]; let m;
+  RE_NUM_WORD.lastIndex=0; while((m=RE_NUM_WORD.exec(seg))) found.push({i:m.index, e:m.index+m[0].length, txt:m[0], n:+m[1]});
+  RE_WORD_NUM.lastIndex=0; while((m=RE_WORD_NUM.exec(seg))){ const i=m.index, e=i+m[0].length; if (found.some(x=> i<x.e+1 && e>x.i)) continue; found.push({i, e, txt:m[0], n:+m[1]}); }
+  found.sort((a,b)=>a.i-b.i);
+  for (const x of found){ marks.push(x.txt.replace(/[\[\]]/g,'').trim()); nums.push(x.n); }
+  let rest = seg; for (const x of found.slice().reverse()) rest = rest.slice(0,x.i)+' '+rest.slice(x.e);
+  return rest.replace(/\(\s*\d{4}\s*,?\s*\)/,'').replace(/[\[\]]/g,'').replace(/^[\s,.;–-]+|[\s,.;–-]+$/g,'').replace(/\s+/g,' ');
+}
+function titleKey(title){
+  const t = String(title||'').trim();
+  const segs = t.split(':').map(s=>s.trim()).filter(Boolean);
+  if (!segs.length) return { key:'', stem:t, marks:[], nums:[], year:null };
+  const marks=[], nums=[]; const keep=[];
+  const first = takeMarks(segs[0], marks, nums) || segs[0];
+  for (const seg of segs.slice(1)){
+    const bare = RE_BARE_NUM.exec(seg); if (bare){ nums.push(+bare[1]); marks.push(bare[1]); continue; }
+    const before = marks.length;
+    const rest = takeMarks(seg, marks, nums);
+    if (!rest) continue;                                   // kun bindangivelse
+    if (marks.length > before){ keep.push(rest); continue; } // bind + tekst: behold teksten
+    const low = norm(seg);
+    if (GENERIC.has(low) || RE_EDITION.test(low)) continue;
+    keep.push(seg);
+  }
+  const y = RE_YEAR.exec(t); const year = y ? +y[1] : null;
+  const stem = [first, ...keep].join(': ');
+  const key = norm(stem).replace(/[.,;!?]+$/,'') + (nums.length ? '#'+nums.join('.') : '') + (year ? '@'+year : '');
+  return { key, stem, marks, nums, year };
+}
+
+// Leveår og lignende tilføjelser i forfatternavnet ("Slot Christiansen, Karin, f. 1968",
+// "Aagaard, Peter, 1947-", "d. 1992", "ca. 1450") skelner to forfattere med samme navn i DBC's
+// katalog. Til sammenligning af to poster er de støj – titlen skelner dem alligevel.
+const RE_LIVSAAR = /,\s*(?:f\.|født|d\.|død|ca\.|c\.|\(?\d{3,4}\s*-\s*\d{0,4}\)?|\d{3,4})[^,]*$/i;
+function authorKey(forf){
+  let a = norm(forf), prev = null;
+  while (a !== prev){ prev = a; a = a.replace(RE_LIVSAAR, '').trim().replace(/[.,;]+$/,''); }
+  return a;
+}
+
+/* ---------------- model ---------------- */
+const LEVEL_NAME_SETS = { 1:['Placering'], 2:['Filial','Opstilling'], 3:['Filial','Afdeling','Opstilling'], 4:['Filial','Afdeling','Opstilling','Delopstilling'], 5:['Filial','Afdeling','Sektion','Opstilling','Delopstilling'] };
+function defaultLevelNames(maxLv){ return LEVEL_NAME_SETS[maxLv] ? LEVEL_NAME_SETS[maxLv].slice() : Array.from({length:maxLv},(_,i)=>'Niveau '+(i+1)); }
+function parseRecs(rows, map){
+  const recs = []; let maxLv = 1;
+  for (const r of rows){
+    const plac = titleCase0(r[map.plac]);
+    if (!plac && !r[map.titel] && !r[map.nr]) continue; // tom linje
+    const parts = plac.split('/').map(s=>s.trim());
+    if (parts.length > maxLv) maxLv = parts.length;
+    const tk = titleKey(r[map.titel]);
+    const forf = titleCase0(map.forf ? r[map.forf] : '');
+    recs.push({
+      id: recs.length,
+      plac, lv: parts,
+      titel: titleCase0(r[map.titel]),
+      nr: titleCase0(r[map.nr]),
+      status: titleCase0(r[map.status]),
+      forf,
+      type: titleCase0(map.type ? r[map.type] : ''),
+      gruppe: titleCase0(map.gruppe ? r[map.gruppe] : ''),
+      klass: titleCase0(map.klass ? r[map.klass] : ''),
+      tkey: tk.key, stem: tk.stem, marks: tk.marks,
+      akey: authorKey(forf),
+    });
+  }
+  for (const x of recs){
+    if (maxLv === 5 && x.lv.length === 4) x.lv.splice(2, 0, '');   // Sektion mangler → tom sektion, ikke tom delopstilling
+    while (x.lv.length < maxLv) x.lv.push('');
+  }
+  return { recs, maxLv };
+}
+function modelFrom(recs, maxLv, hasForf){
+  const levelNames = defaultLevelNames(maxLv);
+  const fields = {};
+  const count = (getter) => { const m = new Map(); for (const x of recs){ const v = getter(x); m.set(v, (m.get(v)||0)+1); } return [...m.entries()].sort((a,b)=> b[1]-a[1] || String(a[0]).localeCompare(String(b[0]),'da')); };
+  for (let i=0;i<maxLv;i++) fields['lv'+i] = { label: levelNames[i], values: count(x=>x.lv[i]) };
+  fields.status = { label:'Status', values: count(x=>x.status) };
+  fields.type   = { label:'Mat. type', values: count(x=>x.type) };
+  fields.gruppe = { label:'Materialegruppe', values: count(x=>x.gruppe) };
+  fields.klass  = { label:'Klassifikation', values: count(x=>x.klass) };
+  return { recs, maxLv, levelNames, fields, hasForf };
+}
+function buildModel(rows, map){ const r = parseRecs(rows, map); return modelFrom(r.recs, r.maxLv, !!map.forf); }
+function val(x, field){ return field.startsWith('lv') ? x.lv[+field.slice(2)] : x[field]; }
+
+/* ---------------- filtre ---------------- */
+// DK5: tallet forrest i klassemærket. "99.4 Ditlevsen, Tove" -> 99.4, "sk"/"te 83.8" -> null
+const RE_DK5 = /^(\d+(?:\.\d+)?)/;
+function dkCode(v){ const m = RE_DK5.exec(String(v||'').trim()); return m ? m[1] : ''; }
+function dkNum(v){ const c = dkCode(String(v||'').replace(',', '.')); return c === '' ? null : parseFloat(c); }
+// filters: { lv0:[...], lv1:[...], type:[...], gruppe:[...], klass:{mode:'is'|'starts'|'contains', text:''} }
+function applyFilters(recs, filters){
+  const fl = [];
+  for (const [f, v] of Object.entries(filters||{})){
+    if (f === 'klass'){
+      const mode = (v && v.mode) || 'is';
+      if (mode === 'between'){
+        const a = dkNum(v.from), b = dkNum(v.to);
+        if (a === null && b === null) continue;
+        const toCode = String(v.to||'').trim().replace(',', '.');
+        fl.push(x => {
+          const n = dkNum(x.klass); if (n === null) return false;
+          if (a !== null && n < a) return false;
+          if (b !== null && n > b){
+            const c = dkCode(x.klass);            // 64.125 hører under 64.12
+            if (!(toCode && c.startsWith(toCode))) return false;
+          }
+          return true;
+        });
+        continue;
+      }
+      const t = norm(v && v.text); if (!t) continue;
+      fl.push(x => { const k = norm(x.klass); return mode==='is' ? k===t : mode==='starts' ? k.startsWith(t) : k.includes(t); });
+    } else if (Array.isArray(v) && v.length){
+      const set = new Set(v); fl.push(x => set.has(val(x,f)));
+    }
+  }
+  if (!fl.length) return recs;
+  return recs.filter(x => fl.every(fn => fn(x)));
+}
+function groupBy(recs, groupLevels, useForf){
+  const m = new Map();
+  for (const x of recs){
+    let k = (useForf ? x.akey : '') + '|' + x.tkey;
+    for (const l of (groupLevels||[])) k += '|' + x.lv[l];
+    let g = m.get(k); if (!g){ g = { k, items:[] }; m.set(k,g); }
+    g.items.push(x);
+  }
+  return [...m.values()];
+}
+function inSide(x, side){ if (!side || !side.field || !side.values || !side.values.length) return false; return side.values.includes(val(x, side.field)); }
+function sideDefined(side){ return !!(side && side.field && side.values && side.values.length); }
+
+/* ---------------- ordanalyse ---------------- */
+const STOP_DEFAULT = ['og','i','jeg','det','at','en','den','til','er','som','på','de','med','han','af','for','ikke','der','var','mig','sig','men','et','har','om','vi','min','havde','ham','hun','nu','over','da','fra','du','ud','man','hans','hvor','eller','hvad','skal','selv','her','alle','vil','blev','kunne','ind','når','være','dog','hende','deres','efter','ned','skulle','denne','end','dette','mit','dig','alt','mine','noget','andre','hvis','din','nogle','hos','blive','mange','ad','bliver','hendes','været','jer','sådan','under','the','of','and','a','to','in','on','with','for','is','are','from','by','your','you','how','one','new','best','very','der','die','das','und','le','la','les','el','los','un','une','roman','romaner','krimi','noveller','novelle','digte','fortællinger','fortælling','bind','bog','bogen','bogens','volume','volumes','vol','del','bd','nr','no','disc','disk','udgave','udg','oplag','ved','ill','illustreret','oversat','mp3','lydbog','cd','dvd','blu-ray','book','novel','complete','edition','deluxe'];
+function stopSet(){ const raw = load('stopord', null); const list = raw===null ? STOP_DEFAULT : raw; return new Set(list.map(w=>norm(w)).filter(Boolean)); }
+const RE_WORD = /[a-zæøåäöüéèáàóíúñç']{3,}/g;
+function titleWords(titel, stop){
+  const t = norm(String(titel||'').replace(/\(.*?\)/g,' '));
+  const out = new Set(); let m;
+  RE_WORD.lastIndex = 0;
+  while ((m = RE_WORD.exec(t))){ const w = m[0].replace(/^'+|'+$/g,''); if (w.length>=3 && !stop.has(w)) out.add(w); }
+  return out;
+}
+
+/* ---------------- funktioner ---------------- */
+// Hver funktion returnerer grupper: { k, items:[...alle i gruppen], hits:[...de der tæller], exp:[...de der eksporteres] }
+const FUNCTIONS = {
+  flere: {
+    title:'Flere eksemplarer',
+    short:'Har vi flere af den samme bog stående?',
+    explain:'Du vælger et antal, og får de titler, I har mindst så mange af stående hjemme lige nu.',
+    howto:[
+      ['Tre af samme bog på én hylde','Sæt antallet til 3 og kryds "Opstilling" og "Delopstilling" af under Tæl inden for samme. Så tælles kun eksemplarer, der står side om side, og du får de titler, der fylder tre pladser samme sted.'],
+      ['Fire af samme bog i hele samlingen','Sæt antallet til 4 og lad Tæl inden for samme stå tom. Så tælles på tværs af filialer, magasiner og hylder under ét.'],
+      ['Kun én bestemt del af samlingen','Brug "Søg i" til at afgrænse til fx en filial eller en enkelt opstilling, før du tæller.']
+    ],
+    defaults:(model)=>({ min:3, statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    run(model, s){
+      const base = applyFilters(model.recs, s.filters);
+      const st = new Set(s.statuses||[]);
+      const out = [];
+      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+        const hits = g.items.filter(x => st.has(x.status));
+        if (hits.length >= (s.min||2)) out.push({ ...g, hits, exp: hits });
+      }
+      return out;
+    },
+  },
+  ogsaa: {
+    title:'Hjemme her, og også dér',
+    short:'Står den samme bog hjemme to steder på én gang?',
+    explain:'Du peger på to steder, og får de titler, der står hjemme begge steder samtidig.',
+    howto:[
+      ['Kvik-hylden og den almindelige hylde','Sæt det første sted til kvik-hylden og det andet til den almindelige hylde. Så får du de titler, der står hjemme begge steder samtidig.'],
+      ['To filialer','Sæt de to steder til hver sin filial, og du får titler, der lige nu er hjemme begge steder.'],
+      ['Hvilke eksemplarer kommer med i eksporten','"Kun fra det første sted" giver numrene på eksemplarerne fra det øverste sted. "Fra begge steder" giver dem alle.']
+    ],
+    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    run(model, s){
+      if (!sideDefined(s.sideA) || !sideDefined(s.sideB)) return { error:'Vælg begge steder.' };
+      const base = applyFilters(model.recs, s.filters);
+      const st = new Set(s.statuses||[]);
+      const out = [];
+      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+        const a = g.items.filter(x => st.has(x.status) && inSide(x, s.sideA));
+        const b = g.items.filter(x => st.has(x.status) && inSide(x, s.sideB));
+        if (a.length && b.length){
+          const hits = [...a, ...b.filter(x=>!a.includes(x))];
+          out.push({ ...g, hits, exp: s.exportWhat==='AB' ? hits : a });
+        }
+      }
+      return out;
+    },
+  },
+  ikke: {
+    title:'Hjemme her, men ikke dér',
+    short:'Er dette det eneste sted, bogen er hjemme?',
+    explain:'Du peger på ét sted, og får de titler, der lige nu kun er hjemme dér — alle andre eksemplarer er udlånt eller står slet ikke der.',
+    howto:[
+      ['Kun hjemme på magasinet','Sæt det første sted til magasinet. Så får du titler, hvor det eneste hjemmeværende eksemplar står dér, og intet står hjemme andre steder.'],
+      ['Kun hjemme på magasinet, men findes også i udlånet','Sæt derudover det andet sted til udlånet. Så snævres listen ind til titler, der også har et eksemplar registreret i udlånet — uanset om det er hjemme eller udlånt. Lader du feltet stå tomt, kommer titler, I kun har på magasin, også med.'],
+      ['Kun hjemme på én filial','De to steder behøver ikke være magasin og udlån. Sæt dem til hver sin filial, og du får titler, der lige nu kun er hjemme på den ene.'],
+      ['Forskellen på de to steder','Det øverste sted er dét, du vil finde bøger på: der skal stå mindst ét eksemplar, som er hjemme – og der må ikke være et hjemme nogen andre steder i samlingen. Det nederste sted er en si: titlen skal desuden have et eksemplar registreret dér, og om det står på hylden eller er udlånt, er lige meget.'],
+      ['Forskellen på denne og "Hjemme her, og også dér"','Den anden funktion finder bøger, der står hjemme to steder på én gang. Denne finder bøger, hvor ét sted er det eneste sted, de er hjemme. Den ene leder efter et sammenfald, den anden efter et fravær.']
+    ],
+    defaults:(model)=>({ statuses: pickDefault(model,'status',['Hjemme']), groupLevels:[], useForf:true, sideA:{field:'',values:[]}, sideB:{field:'',values:[]}, exportWhat:'A', filters:{ type: pickDefault(model,'type',['Bog']) } }),
+    run(model, s){
+      if (!sideDefined(s.sideA)) return { error:'Vælg stedet, der skal være hjemme.' };
+      const base = applyFilters(model.recs, s.filters);
+      const st = new Set(s.statuses||[]);
+      const useB = sideDefined(s.sideB);
+      const out = [];
+      for (const g of groupBy(base, s.groupLevels, s.useForf)){
+        const a = g.items.filter(x => st.has(x.status) && inSide(x, s.sideA));
+        if (!a.length) continue;
+        const homeElsewhere = g.items.some(x => st.has(x.status) && !inSide(x, s.sideA));
+        if (homeElsewhere) continue;
+        if (useB && !g.items.some(x => inSide(x, s.sideB))) continue;
+        out.push({ ...g, hits:a, exp: s.exportWhat==='AB' ? g.items.slice() : a });
+      }
+      return out;
+    },
+  },
+  fjernlaan: {
+    title:'Fjernlån',
+    short:'Hvad låner vi ofte hjem udefra – og hvad har vi selv?',
+    explain:'Tæller hvor mange gange hvert værk er hentet hjem som fjernlån. Lægger du også samlingen op, vises det ved siden af, hvor mange eksemplarer I selv har.',
+    needs:'ill',
+    custom:true,
+    howto:[
+      ['Titler vi låner hjem igen og igen','Sæt “mindst antal fjernlån” til fx 5. Listen står med flest øverst.'],
+      ['… som vi ikke selv har','Sæt “vi ejer” til “ingen eksemplarer”. Kræver, at samlingen også er lagt op.'],
+      ['… som vi kun har få af','Sæt “vi ejer” til “højst” og skriv et tal.'],
+      ['Forfattere','Fanen Forfattere tæller på tværs af værker, så en serie ikke skjuler sig i mange enkelttitler.'],
+      ['Ord i titlerne','Fanen Ord viser de ord, der er mest overrepræsenterede i fjernlånene i forhold til jeres egne titler. Den kræver, at samlingen er lagt op, og siger kun noget om den del af samlingen, du har lagt op.']
+    ],
+    defaults:()=>({ min:3, own:'alle', ownMax:1, types:[], minWord:40 }),
+  },
+};
+function pickDefault(model, field, wanted){
+  const have = new Set((model.fields[field]||{values:[]}).values.map(v=>v[0]));
+  return wanted.filter(w => have.has(w));
+}
+
+
+/* ================= UI ================= */
+const S = { fileName:'', fileCount:0, files:[], fileTimes:[], illFiles:[], illTimes:[], ill:null, illWarn:'', illTab:'titler', presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
+            settings:{}, results:null, error:'', checked:new Set(), open:new Set(), sort:'forf', shown:150, warn:'' };
+const $app = document.getElementById('app');
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const disp = v => v === '' ? '(ingen)' : v;
+const nf = n => Number(n).toLocaleString('da-DK');
+const ICON = {
+  logo:'<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 23V6M10 23V9M16 23V5M22 23V11" stroke="var(--green)"/><path d="M2 24h24" stroke="var(--ink-3)"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  print:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.6l-6 3.3 1.3-6.7-5-4.7 6.8-.8z"/></svg>',
+  ill:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7v14H4zM20 6h-7v14h7z"/><path d="M11 10l2-2 2 2"/></svg>',
+  fjernlaan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h6v15H3z"/><path d="M21 5h-6v15h6z"/><path d="M9.5 9h5M12.5 7l2 2-2 2"/></svg>',
+  flere:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V8M10 20V4M15 20V8M20 20V11"/></svg>',
+  ogsaa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>',
+  ikke:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="12" r="6"/><circle cx="16" cy="12" r="6" stroke-dasharray="3 3"/></svg>',
+};
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+function store(k,v){ try{ localStorage.setItem('hyldetjek:'+k, JSON.stringify(v)); }catch(e){} }
+function load(k,d){ try{ const v=localStorage.getItem('hyldetjek:'+k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+
+/* ---------- filens alder ---------- */
+const DAY = 86400000;
+function dayStart(ms){ const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
+function fileAge(){
+  const t = S.fileTimes.filter(x=>x); if (!t.length) return null;
+  const oldest = Math.min(...t), newest = Math.max(...t);
+  const days = Math.round((dayStart(Date.now()) - dayStart(oldest)) / DAY);   // kalenderdage, ikke døgn
+  return { oldest, newest, days,
+           level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok',
+           spread: newest - oldest > 3600000 };
+}
+function whenText(ms){
+  const d = new Date(ms), now = new Date();
+  const kl = d.toLocaleTimeString('da-DK', {hour:'2-digit', minute:'2-digit'});
+  const midnat = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (ms >= midnat) return 'i dag kl. '+kl;
+  if (ms >= midnat - DAY) return 'i går kl. '+kl;
+  return d.toLocaleDateString('da-DK', {weekday:'long', day:'numeric', month:'long'}) + ' kl. ' + kl;
+}
+function ageText(a, flere){
+  const hvad = flere ? 'Ældste fil' : 'Filen';
+  if (a.days <= 0) return (flere ? 'Filerne er trukket ' : 'Trukket ') + whenText(a.oldest);
+  if (a.days === 1) return `${hvad} er fra ` + whenText(a.oldest);
+  return `${hvad} er ${a.days} dage gammel – trukket ${whenText(a.oldest)}`;
+}
+
+/* ---------- fil ---------- */
+function readFile(file){ readFiles([file]); }
+function readFiles(files, append){
+  files = [...files].filter(f=>f && f.name);
+  if (!files.length) return;
+  files.sort((a,b)=>a.name.localeCompare(b.name,'da',{numeric:true}));
+  append = append && S.rows && S.headers;
+  S.error=''; S.warn='';
+  const stamps = files.map(f => (typeof f.lastModified === 'number' && f.lastModified > 0) ? f.lastModified : null);
+  S.files = append ? S.files.concat(files.map(f=>f.name)) : files.map(f=>f.name);
+  S.fileTimes = append ? S.fileTimes.concat(stamps) : stamps;
+  S.fileCount = S.files.length;
+  S.fileName = S.files.length===1 ? S.files[0] : `${S.files.length} filer`;
+  toast(files.length===1 ? 'Læser filen…' : `Læser ${files.length} filer…`);
+  let headers = append ? S.headers : null; const rows = append ? S.rows.slice() : []; const mismatched = [];
+  const next = (i) => {
+    if (i >= files.length){
+      if (!rows.length){ S.error='Filerne ser tomme ud, eller de kunne ikke læses som CSV.'; S.rows=null; render(); return; }
+      if (mismatched.length) S.warn = `${mismatched.length} ${mismatched.length===1?'fil har':'filer har'} andre kolonner end den første og er sprunget over: ${mismatched.join(', ')}.`;
+      S.headers = headers; S.rows = rows; S.map = autoMap(S.headers); finishLoad(); return;
+    }
+    Papa.parse(files[i], { header:true, skipEmptyLines:true, encoding:'UTF-8',
+      complete: res => {
+        const h = (res.meta.fields||[]).filter(x=>x!==undefined);
+        if (!headers){ headers = h; }
+        else if (h.join('\u0001') !== headers.join('\u0001')){ mismatched.push(files[i].name); next(i+1); return; }
+        for (const r of res.data) rows.push(r);
+        next(i+1);
+      },
+      error: err => { S.error='Filen '+files[i].name+' kunne ikke læses: '+err.message; render(); }
+    });
+  };
+  next(0);
+}
+function missingRoles(){ return ROLES.filter(r=>r.req && !S.map[r.id]); }
+
+/* ---------- fjernlånsfil ---------- */
+function readIll(files, append){
+  files = [...files].filter(f=>f && f.name);
+  if (!files.length) return;
+  files.sort((a,b)=>a.name.localeCompare(b.name,'da',{numeric:true}));
+  append = append && S.ill;
+  S.illWarn='';
+  const stamps = files.map(f => (typeof f.lastModified === 'number' && f.lastModified > 0) ? f.lastModified : null);
+  S.illFiles = append ? S.illFiles.concat(files.map(f=>f.name)) : files.map(f=>f.name);
+  S.illTimes = append ? S.illTimes.concat(stamps) : stamps;
+  toast(files.length===1 ? 'Læser fjernlånsfilen…' : `Læser ${files.length} filer…`);
+  const rows = []; let headers = null;
+  const next = (i) => {
+    if (i >= files.length){
+      if (!rows.length){ S.illWarn='Filen ser tom ud, eller den kunne ikke læses som CSV.'; render(); return; }
+      const map = autoMap(headers);
+      if (ROLES.filter(r=>r.req && !map[r.id]).length){ S.illWarn='Fjernlånsfilen mangler nogle af de kolonner, værktøjet skal bruge – den skal have samme kolonner som materialeeksporten.'; render(); return; }
+      const parsed = parseRecs(rows, map);
+      const prev = append && S.ill ? S.ill.recs : [];
+      buildIll(prev.concat(parsed.recs));
+      render(); return;
+    }
+    Papa.parse(files[i], { header:true, skipEmptyLines:true, encoding:'UTF-8',
+      complete: res => { const h=(res.meta.fields||[]).filter(x=>x!==undefined); if (!headers) headers=h;
+        for (const r of res.data) rows.push(r); next(i+1); },
+      error: err => { S.illWarn='Filen '+files[i].name+' kunne ikke læses: '+err.message; render(); }
+    });
+  };
+  next(0);
+}
+function buildIll(recs){
+  const seen = new Set(); const uniq = [];
+  for (const x of recs){ if (x.nr && seen.has(x.nr)) continue; if (x.nr) seen.add(x.nr); uniq.push(x); }
+  const works = new Map();
+  for (const x of uniq){
+    const k = x.akey + '|' + x.tkey;
+    let w = works.get(k);
+    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, n:0, types:new Map(), grupper:new Map() }; works.set(k,w); }
+    w.n++;
+    if (x.type) w.types.set(x.type,(w.types.get(x.type)||0)+1);
+    if (x.gruppe) w.grupper.set(x.gruppe,(w.grupper.get(x.gruppe)||0)+1);
+    if (!w.forf && x.forf) w.forf = x.forf;
+  }
+  const types = new Map();
+  for (const x of uniq){ const t = x.type || ''; types.set(t,(types.get(t)||0)+1); }
+  S.ill = { recs:uniq, works, count:uniq.length,
+            types:[...types.entries()].sort((a,b)=>b[1]-a[1]) };
+}
+function illAge(){
+  const t = S.illTimes.filter(x=>x); if (!t.length) return null;
+  const oldest = Math.min(...t), newest = Math.max(...t);
+  const days = Math.round((dayStart(Date.now()) - dayStart(oldest)) / DAY);
+  return { oldest, newest, days, level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok', spread: newest-oldest > 3600000 };
+}
+
+/* ---------- egen beholdning som opslag ---------- */
+function ownIndex(){
+  if (!S.model) return null;
+  if (S._own && S._ownFor === S.model) return S._own;
+  const works = new Map(), authors = new Map();
+  for (const x of S.model.recs){
+    const k = x.akey + '|' + x.tkey;
+    works.set(k, (works.get(k)||0)+1);
+    if (x.akey){ let a = authors.get(x.akey); if (!a){ a = {ex:0, titler:new Set()}; authors.set(x.akey,a); } a.ex++; a.titler.add(x.tkey); }
+  }
+  S._own = { works, authors }; S._ownFor = S.model; return S._own;
+}
+function finishLoad(){
+  if (missingRoles().length){ S.model=null; render(); return; }
+  S.full = parseRecs(S.rows, S.map);
+  { const byNr = new Map(); const uniq = []; const dupNrs = new Set(); let d = 0;
+    for (const x of S.full.recs){
+      if (!x.nr){ uniq.push(x); continue; }
+      const prev = byNr.get(x.nr);
+      if (prev === undefined){ byNr.set(x.nr, uniq.length); uniq.push(x); continue; }
+      d++; dupNrs.add(x.nr);
+      if (uniq[prev].status === 'Hjemme' && x.status !== 'Hjemme') uniq[prev] = x;   // bogen er ikke på hylden – behold den række, der siger det
+    }
+    S.full.recs = uniq; S.dupes = d; S.dupeNrs = [...dupNrs]; uniq.forEach((x,i)=>x.id=i); }
+  S.chipSort = load('chipsort',{});
+  S.base = sanitizeBase(load('base',{}));
+  applyBase();
+  const bad = S.model.recs.filter(x=>!x.nr).length;
+  if (bad) S.warn = nf(bad)+' rækker uden materialenummer er sprunget over ved eksport.';
+  if (S.dupes) S.warn += (S.warn?' ':'')+nf(S.dupeNrs.length)+(S.dupeNrs.length===1?' materiale stod':' materialer stod')+' to gange i filen, formentlig fordi de skiftede status, mens udtrækket blev lavet. Kun én række er talt med.';
+  if (!S.map.forf) S.warn += (S.warn?' ':'')+'Ingen forfatterkolonne fundet – der grupperes kun på titel.';
+  S.results=null; S.checked=new Set(); S.open=new Set();
+  render();
+}
+
+/* ---------- grundopsætning ---------- */
+function sanitizeBase(b){
+  const out = {}; if (!b || !S.full) return out;
+  for (let i=0;i<S.full.maxLv;i++){ const have = new Set(S.full.recs.map(x=>x.lv[i])); const ex = (b['lv'+i]||[]).filter(v=>have.has(v)); if (ex.length) out['lv'+i]=ex; }
+  return out;
+}
+function applyBase(){
+  const ex = []; for (let i=0;i<S.full.maxLv;i++){ const l=S.base['lv'+i]; if (l && l.length) ex.push([i,new Set(l)]); }
+  const active = ex.length ? S.full.recs.filter(x => !ex.some(([i,set]) => set.has(x.lv[i]))) : S.full.recs;
+  S.model = modelFrom(active, S.full.maxLv, !!S.map.forf);
+  S.model.fullCount = S.full.recs.length; S.model.excluded = S.full.recs.length - active.length;
+}
+function baseView(){
+  const fullModel = modelFrom(S.full.recs, S.full.maxLv, !!S.map.forf);
+  const parts = fullModel.levelNames.map((n,i)=>{
+    const vals = sortVals('lv'+i, 'base_lv'+i, fullModel.fields['lv'+i].values); if (vals.length===1 && vals[0][0]==='') return '';
+    const ex = new Set(S.base['lv'+i]||[]);
+    const chips = vals.map(([v,c]) => `<label class="chip ${ex.has(v)?'':'on'}"><input type="checkbox" name="base_lv${i}" value="${esc(v)}" ${ex.has(v)?'':'checked'}> ${esc(disp(v))} <span class="n">${nf(c)}</span></label>`).join('');
+    return `<div class="lvl"><div class="lvlhead"><b>${esc(n)}</b>${vals.length>1?sortTools('lv'+i,'base_lv'+i):''}</div><div class="chipbox" data-name="base_lv${i}"><div class="chips">${chips}</div><div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button></div></div></div>`;
+  }).join('');
+  return `<details class="base" ${S.baseOpen?'open':''}><summary><span>Grundopsætning</span><span class="hint">${S.model.excluded ? nf(S.model.excluded)+' materialer fravalgt' : 'alt er med'}</span><span class="chev">${ICON.chev}</span></summary>
+    <div class="body"><p class="muted small">Fravælg de steder, der aldrig skal med – fx et arkiv eller tomme filialer. Valget huskes i denne browser og gælder alle opgaver.</p><div class="levelgrid">${parts}</div></div></details>`;
+}
+
+/* ---------- render ---------- */
+function render(){ $app.innerHTML = S.view==='home' ? homeView() : toolView(); bind(); }
+
+function topBar(){
+  const f = S.model ? `<div class="file">${(()=>{ const a=fileAge(); return a && a.level!=='ok' ? `<span class="agedot ${a.level}" title="${esc(ageText(a))}"></span>` : ''; })()}<span class="name" title="${esc(S.fileName)}">${S.fileCount>1?S.fileCount+' filer':esc(S.fileName)}</span><span>${nf(S.model.recs.length)} materialer</span><button class="btn quiet" data-act="addfiles">Tilføj filer</button></div>` : '';
+  return `<div class="top"><button class="brand" data-act="home" aria-label="Til forsiden">${ICON.logo}<b>Hyldetjek</b></button><a class="ver" href="changelog.html" title="Se hvad der er ændret i denne og tidligere versioner">${VERSION}</a>${f}<input type="file" id="fileInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
+}
+
+function homeView(){
+  let mid;
+  if (!S.rows){
+    mid = `<label class="drop" id="drop" for="fileInput2">
+      <strong>Træk din materialeeksport herind, eller klik for at vælge den</strong>
+      <div class="sub">CSV-eksporten fra Cicero med placering, titel, materialenummer og status. Flere filer på én gang lægges sammen.</div>
+      <div class="sub2">Filerne læses i din browser og sendes ingen steder hen.</div>
+      <input type="file" id="fileInput2" accept=".csv,.txt,text/csv" multiple></label>`;
+  } else if (!S.model){
+    mid = mappingView();
+  } else {
+    const m = S.model; const lv0 = m.fields.lv0.values.length; const placs = new Set(m.recs.map(x=>x.plac)).size;
+    mid = `<div class="loaded" id="drop"><div class="cardico">${ICON.check}</div>
+      <div class="facts"><b>${S.files.length===1?esc(S.files[0]):S.files.length+' filer'}</b><span>${nf(m.recs.length)} materialer${m.excluded?` (${nf(m.fullCount)} i filen, ${nf(m.excluded)} fravalgt)`:''}, ${lv0} ${lv0===1?'sted':'steder'}, ${nf(placs)} placeringer, ${nf(new Set(m.recs.map(x=>x.akey+'|'+x.tkey)).size)} titler</span></div>
+      <div class="acts"><button class="btn primary" data-act="addfiles">Tilføj filer</button><button class="btn" data-act="pick">Start forfra</button></div>
+      ${(()=>{ const a=fileAge(); if (!a) return ''; return `<div class="age ${a.level}"><span>${esc(ageText(a, S.files.length>1))}</span>${helpBtn('alder')}</div>`; })()}
+      <div class="filelist">${fileChips(S.files, S.fileTimes)}</div></div>`;
+  }
+  const presets = load('presets',[]);
+  const fns = Object.entries(FUNCTIONS).map(([id,f]) => { const ready = f.needs==='ill' ? !!S.ill : !!S.model;
+    const favs = ready ? presets.filter(p=>p.fn===id && p.fav) : [];
+    return `<li class="${ready?'':'off'}"><button class="fn" data-act="open" data-fn="${id}" ${ready?'':'disabled'}>
+      <span class="ico">${ICON[id]}</span><span class="t">${esc(f.title)}</span><span class="d">${esc(f.short)}${!ready&&f.needs==='ill'?' <i>Kræver en fjernlånsfil.</i>':''}</span></button>
+      ${favs.length?`<div class="favs">${favs.map(p=>`<button class="fav" data-act="fav" data-fn="${id}" data-name="${esc(p.name)}" title="Åbn og kør med denne indstilling">${ICON.star}${esc(p.name)}</button>`).join('')}</div>`:''}</li>`; }).join('');
+  return `<div class="wrap">${topBar()}
+    <div class="home">
+      <div class="hero"><h1>Find det på hylderne, som Cicero ikke viser dig</h1>
+        <p>Læs en eksport af samlingen ind, vælg en opgave, og få en liste at gå ud med – eller en fil af materialenumre til Cicero.</p></div>
+      <div class="slots">${mid}${illCard()}</div>
+    </div>
+    ${S.error?`<div class="err">${esc(S.error)}</div>`:''}
+    <ul class="fns">${fns}</ul>
+    ${S.model?`<div class="foot">${baseView()}${S.warn?`<div class="warn">${esc(S.warn)}${S.dupes?` <button class="linkbtn" data-act="dupecsv">Hent numrene som CSV</button>`:''}</div>`:''}</div>`:''}
+    </div>`;
+}
+
+function fileLevel(ms){
+  if (!ms) return null;
+  const days = Math.round((dayStart(Date.now()) - dayStart(ms)) / DAY);
+  return { days, level: days >= 3 ? 'rod' : days >= 1 ? 'gul' : 'ok' };
+}
+function fileChips(names, times){
+  return names.map((f,i)=>{
+    const l = fileLevel(times[i]);
+    const title = l ? `${f} · trukket ${whenText(times[i])}` : `${f} · uden tidsstempel`;
+    const mark = !l ? '<span class="fdot none">?</span>' : l.level==='ok' ? '<span class="fdot ok"></span>' : `<span class="fdot ${l.level}">!</span>`;
+    return `<span class="fchip" title="${esc(title)}">${mark}${esc(f)}</span>`;
+  }).join('');
+}
+function illCard(){
+  const open = S.ill || S.illOpen;
+  if (!open) return `<div class="illslot"><button class="illadd" data-act="illopen">${ICON.ill}<span><b>Har du også en fjernlånsfil?</b><i>Læg den op, så kan du se, hvad I ofte låner hjem udefra.</i></span><span class="go">Læg op</span></button></div>`;
+  if (!S.ill) return `<label class="drop small" id="illdrop" for="illInput2">
+      <strong>Træk fjernlånseksporten herind, eller klik for at vælge den</strong>
+      <div class="sub">Samme kolonner som materialeeksporten. Hvert fjernlån er sin egen række.</div>
+      ${S.illWarn?`<div class="sub2" style="color:var(--red)">${esc(S.illWarn)}</div>`:''}
+      <input type="file" id="illInput2" accept=".csv,.txt,text/csv" multiple></label>`;
+  const a = illAge();
+  return `<div class="loaded ill" id="illdrop"><div class="cardico">${ICON.ill}</div>
+    <div class="facts"><b>${S.illFiles.length===1?esc(S.illFiles[0]):S.illFiles.length+' filer'}</b><span>${nf(S.ill.count)} fjernlån, ${nf(S.ill.works.size)} forskellige værker</span></div>
+    <div class="acts"><button class="btn" data-act="illadd">Tilføj filer</button><button class="btn quiet" data-act="illclear">Fjern</button></div>
+    ${a ? `<div class="age ${a.level}"><span>${esc(ageText(a, S.illFiles.length>1))}</span></div>` : ''}
+    ${S.illWarn?`<div class="filelist" style="color:var(--red)">${esc(S.illWarn)}</div>`:`<div class="filelist">${fileChips(S.illFiles, S.illTimes)}</div>`}
+    <input type="file" id="illInput" accept=".csv,.txt,text/csv" multiple class="hidden"></div>`;
+}
+function mappingView(){
+  const opts = h => `<option value="">– ikke i filen –</option>` + S.headers.filter(x=>x).map(x=>`<option value="${esc(x)}" ${S.map[h]===x?'selected':''}>${esc(x)}</option>`).join('');
+  return `<div class="mapping"><h3>Hvilke kolonner er hvad?</h3>
+    <p class="muted small">Filen har andre kolonnenavne end ventet. Peg på de rigtige – de fire første skal være der.</p>
+    <div class="grid">${ROLES.map(r=>`<label>${esc(r.label)}${r.req?'':' <span class="muted">(valgfri)</span>'}<select data-role="${r.id}">${opts(r.id)}</select></label>`).join('')}</div>
+    <div style="margin-top:16px"><button class="btn primary" data-act="applymap">Brug disse kolonner</button></div></div>`;
+}
+
+/* ---------- tool ---------- */
+const HELP = {
+  status:'Cicero har mange statusser, men kun "Hjemme" betyder, at bogen faktisk står på hylden. De øvrige – udlånt, i transit, bortkommet – er som regel ikke med. Vil du fx også tælle bøger, der er på vej hjem, kan du krydse dem af her.',
+  min:'Hvor mange eksemplarer skal der mindst være, før titlen kommer med? 2 finder dubletter, 3 tripletter, 4 er nok til en stak på en udstilling.',
+  count:'Skal eksemplarerne stå samme sted for at tælle sammen? Krydser du Opstilling og Delopstilling af, tæller kun bøger, der står side om side på samme hylde. Lader du alt stå tomt, tælles hele samlingen under ét – tre bøger fordelt på tre filialer bliver da til "3".',
+  forf:'To forskellige bøger kan hedde det samme. Med fluebenet sat tælles "Bjørnen" af Gard Sveen og "Bjørnen" af Katrine Marie Guldager hver for sig. Fjern det kun, hvis forfatterfeltet er tomt i jeres data.',
+  sideA:'Vælg først hvilken slags sted du peger på – fx Opstilling – og derefter hvilke af dem, det gælder. Du kan vælge flere.',
+  sideB:'Det andet sted, der sammenlignes med. Vælg først hvilken slags sted, derefter hvilke af dem.',
+  sideB_ikke:'Bruges til at sortere fra: titlen skal have mindst ét eksemplar registreret dette sted, hjemme eller udlånt – det er lige meget hvilket. Sæt den til udlånet, så du kun får bøger, der også står på hylden til daglig.',
+  exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
+  places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
+  filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde. Med "mellem" kan du tage et spænd af klassemærker, fx 99.1 til 99.94 – der læses tallet forrest, så "99.4 Ditlevsen, Tove" tæller som 99.4, og undergrupper som 64.125 kommer med, når du slutter ved 64.12.',
+  illmin:'Hvor mange gange skal et værk være hentet hjem, før det kommer med på listen? 1 viser alt, 5 viser dem, I har lånt igen og igen.',
+  illown:'Sammenligner med den samling, du har lagt op på forsiden. “Ingen eksemplarer” finder det, I slet ikke har – husk at det kun gælder den del af samlingen, der er i filen. Har du kun lagt voksenafdelingen op, ser børnebøger ud, som om I ikke har dem.',
+  illord:'Ordene sammenlignes med jeres egne titler: et ord kommer højt op, hvis det fylder meget mere i fjernlånene end på jeres hylder. Listen “ord der springes over” kan du rette i – ét ord pr. mellemrum.',
+  alder:'Filen er et øjebliksbillede af samlingen, da du trak den. Siden da kan materialer være udlånt, afleveret, flyttet eller kasseret. Jo ældre filen er, jo større er risikoen for, at listen ikke passer med hylden – at du går forgæves efter en bog, eller masseretter numre, der har ændret sig.',
+  presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
+};
+function helpBtn(k){ return `<button class="help" data-act="help" data-k="${k}" aria-label="Hjælp" title="Hvad betyder det?">?</button>`; }
+function curSettings(){ return S.settings[S.fn]; }
+function toolView(){
+  const f = FUNCTIONS[S.fn];
+  return `<div class="wrap">${topBar()}
+    <div class="toolhead"><div><button class="back" data-act="home">${ICON.back} Alle opgaver</button><h1>${esc(f.title)}</h1><p class="explain">${esc(f.explain)}</p>
+      ${f.howto?`<details class="howto"><summary><span>Eksempler på brug</span><span class="chev">${ICON.chev}</span></summary><p class="lead">Eksempler på, hvad funktionen kan bruges til. Du bestemmer selv, hvordan du sætter den op.</p><dl>${f.howto.map(([t,d])=>`<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('')}</dl></details>`:''}</div></div>
+    <div class="tool"><div class="panel" id="panel">${panelView()}</div><div class="results" id="results">${resultsView()}</div></div></div>`;
+}
+
+const COL = new Intl.Collator('da', {numeric:true, sensitivity:'base'});
+const ABC_FIRST = new Set(['Delopstilling','Mat. type']);
+function sortKey(name){ return 'sort:'+name; }
+function chipSort(field, name){
+  const saved = S.chipSort[name];
+  if (saved) return saved;
+  const label = (S.model.fields[field]||{}).label || '';
+  return { mode: ABC_FIRST.has(label) ? 'abc' : 'antal', dir: 1 };
+}
+function sortVals(field, name, vals){
+  const c = chipSort(field, name); const out = vals.slice();
+  out.sort(c.mode==='abc'
+    ? (a,b)=> COL.compare(disp(a[0]), disp(b[0]))
+    : (a,b)=> b[1]-a[1] || COL.compare(disp(a[0]), disp(b[0])));
+  if (c.dir < 0) out.reverse();
+  return out;
+}
+function sortTools(field, name){
+  const c = chipSort(field, name);
+  return `<span class="sorttools"><button data-act="sortmode" data-n="${esc(name)}" data-f="${esc(field)}" title="Skift mellem alfabetisk og efter antal">${c.mode==='abc'?'A–Å':'Antal'}</button><button data-act="sortdir" data-n="${esc(name)}" data-f="${esc(field)}" title="Vend rækkefølgen om">${c.dir>0?'↓':'↑'}</button></span>`;
+}
+function chipList(field, selected, name, opts={}){
+  const vals = sortVals(field, name, S.model.fields[field].values); const sel = new Set(selected||[]);
+  const many = vals.length > 40; const col = !!opts.collapsible && !S.chipOpen.has(name);
+  const chips = vals.map(([v,n]) => `<label class="chip ${sel.has(v)?'on':''} ${col&&!sel.has(v)?'hid':''}" data-v="${esc(v)}"><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.has(v)?'checked':''}> ${esc(disp(v))} <span class="n">${nf(n)}</span></label>`).join('');
+  const unit = opts.unit || 'værdier';
+  return `<div class="chipbox ${col?'collapsed':''}" data-name="${name}">${vals.length>1?`<div class="chips-top when-open">${sortTools(field,name)}</div>`:''}${many?`<input class="chips-filter" placeholder="Søg i ${vals.length} ${unit}…">`:''}<div class="chips">${col&&!sel.size&&opts.showAll!==false?`<span class="muted small when-closed">Alle</span>`:''}${chips}</div>
+    <div class="chips-tools"><button class="when-open" data-act="allchips">Vælg alle</button><button class="when-open" data-act="nochips">Fravælg alle</button>${opts.note?`<span class="muted">${opts.note}</span>`:''}</div>${opts.collapsible?`<button class="cb-toggle" data-act="togglechips" data-open="${esc(opts.expandLabel || `Vis alle ${vals.length} ${unit}`)}">${col?(opts.expandLabel || `Vis alle ${vals.length} ${unit}`):'Skjul'}</button>`:''}</div>`;
+}
+function levelChecks(sel){
+  const m=S.model; const s=new Set(sel||[]);
+  return m.levelNames.map((n,i)=>`<label class="chip ${s.has(i)?'on':''}"><input type="checkbox" name="groupLevel" value="${i}" ${s.has(i)?'checked':''}> ${esc(n)}</label>`).join('');
+}
+function fieldSelect(name, cur){
+  const m=S.model; const opts=[]; 
+  m.levelNames.forEach((n,i)=>opts.push(['lv'+i,n]));
+  if (m.fields.gruppe.values.length>1 || m.fields.gruppe.values[0][0]!=='') opts.push(['gruppe','Materialegruppe']);
+  if (m.fields.type.values.length>1) opts.push(['type','Mat. type']);
+  return `<select name="${name}"><option value="">Vælg felt…</option>${opts.map(([v,l])=>`<option value="${v}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+}
+function sideView(key, label, side, optional){
+  const hk = key==='B' ? (S.fn==='ikke' ? 'sideB_ikke' : 'sideB') : 'sideA';
+  return `<div class="side" data-side="${key}"><div class="lbl"><span class="lbl2">${label} ${helpBtn(hk)}</span>${optional?'<span class="opt">valgfri</span>':''}</div>
+    <div class="fieldrow">${fieldSelect(key+'_field', side.field)}</div>
+    ${side.field ? chipList(side.field, side.values, key+'_val') : ''}</div>`;
+}
+const LEVEL_UNITS = {Filial:'filialer', Afdeling:'afdelinger', Sektion:'sektioner', Opstilling:'opstillinger', Delopstilling:'delopstillinger'};
+const LEVEL_UNIT = n => LEVEL_UNITS[n] || (n.toLowerCase()+'-værdier');
+function placeView(fl){
+  const m=S.model; const parts=[];
+  m.levelNames.forEach((n,i)=>{ const vals=m.fields['lv'+i].values; if (vals.length===1 && vals[0][0]==='') return;
+    parts.push(`<div class="lvlrow"><b>${esc(n)}</b>${chipList('lv'+i, fl['lv'+i], 'f_lv'+i, {collapsible:true, unit:LEVEL_UNIT(n), expandLabel:'Vælg', showAll:false})}</div>`); });
+  return `<div class="sec places"><h3><span class="lbl2">Søg i ${helpBtn('places')}</span><span class="hint">intet valgt = alle</span></h3><div class="body">${parts.join('')}</div></div>`;
+}
+function filtersView(fl){
+  const m=S.model; const parts=[];
+  const cnt = Object.entries(fl||{}).reduce((a,[k,v])=> a + (k==='klass' ? ((v&&(v.text||v.from||v.to))?1:0) : (k.startsWith('lv') ? 0 : (Array.isArray(v)&&v.length?1:0))),0);
+  parts.push(`<div class="lvl"><b>Mat. type</b>${chipList('type', fl.type, 'f_type')}</div>`);
+  if (m.fields.gruppe.values.length>1) parts.push(`<div class="lvl"><b>Materialegruppe</b>${chipList('gruppe', fl.gruppe, 'f_gruppe')}</div>`);
+  const kl = fl.klass||{mode:'is',text:'',from:'',to:''};
+  const between = kl.mode==='between';
+  parts.push(`<div class="lvl"><b>Klassifikation</b><div class="fieldrow"><select name="f_klass_mode"><option value="is" ${kl.mode==='is'?'selected':''}>er præcis</option><option value="starts" ${kl.mode==='starts'?'selected':''}>begynder med</option><option value="contains" ${kl.mode==='contains'?'selected':''}>indeholder</option><option value="between" ${between?'selected':''}>mellem</option></select>${
+    between
+      ? `<input type="text" name="f_klass_from" value="${esc(kl.from||'')}" placeholder="fra, fx 64" style="width:6.5em" inputmode="decimal"><span class="muted small">til</span><input type="text" name="f_klass_to" value="${esc(kl.to||'')}" placeholder="til, fx 64.12" style="width:6.5em" inputmode="decimal">`
+      : `<input type="text" name="f_klass_text" value="${esc(kl.text)}" placeholder="fx sk eller 64" style="flex:1;min-width:90px">`
+  }</div>${between?`<p class="muted small" style="margin-top:6px">Kun klassemærker, der begynder med et tal. Skønlitteratur (sk) kommer ikke med.</p>`:''}</div>`);
+  return `<details class="sec"><summary><span class="lbl2">Afgræns materialerne ${helpBtn('filters')}</span><span style="display:flex;align-items:center;gap:10px">${cnt?`<span class="cnt">${cnt} ${cnt===1?'aktiv':'aktive'}</span>`:''}<span class="chev">${ICON.chev}</span></span></summary>
+    <div class="body levelgrid">${parts.join('')}</div></details>`;
+}
+function presetsView(){
+  const all = load('presets',[]).filter(p=>p.fn===S.fn);
+  const cur = S.presetName || '';
+  return `<div class="sec"><h3><span class="lbl2">Gemte opsætninger ${helpBtn('presets')}</span></h3><div class="presets" style="margin-top:10px"><select name="preset"><option value="">Gemte indstillinger…</option>${all.map((p,i)=>`<option value="${i}" ${p.name===cur?'selected':''}>${p.fav?'★ ':''}${esc(p.name)}</option>`).join('')}</select>
+    <button class="btn" data-act="savepreset" title="Gem de nuværende indstillinger under et navn">Gem</button>
+    <button class="btn" data-act="delpreset" title="Slet den valgte">Slet</button>
+    <button class="btn" data-act="exportpresets" title="Hent alle gemte indstillinger som en fil, du kan dele">Del</button>
+    <button class="btn" data-act="importpresets" title="Læs en delt fil af indstillinger ind">Hent</button>
+    <input type="file" id="presetFile" accept=".json" class="hidden"></div>
+    <div class="saveform hidden"><input type="text" name="presetName" placeholder="Navn på indstillingen" maxlength="40"><label class="chip"><input type="checkbox" name="presetFav"> Vis som genvej på forsiden</label><div class="saveacts"><button class="btn primary" data-act="savepreset2">Gem</button><button class="btn quiet" data-act="savecancel">Annuller</button></div></div></div>`;
+}
+function coverage(){
+  if (!S.model) return null;
+  const i = S.model.levelNames.indexOf('Afdeling');
+  const vals = i < 0 ? [] : S.model.fields['lv'+i].values.filter(v=>v[0]);
+  const illTypes = new Set(S.ill ? S.ill.types.filter(t=>t[0]).map(t=>t[0]) : []);
+  return { navne: vals.map(v=>v[0]), smal: vals.length === 1, fil: S.files.length===1 ? S.files[0] : S.files.length+' filer', illTypes:illTypes.size };
+}
+function illPanelView(){
+  const s = curSettings(); const own = ownIndex();
+  const cov = coverage();
+  const types = S.ill.types.filter(t=>t[0]);
+  return `<div class="sec"><h3><span class="lbl2">Mindst hvor mange fjernlån? ${helpBtn('illmin')}</span></h3><div class="body">
+      <div class="fieldrow"><input type="number" name="illmin" min="1" max="999" value="${s.min}"><label>gange hentet hjem</label></div></div></div>
+    <div class="sec"><h3><span class="lbl2">Vi ejer selv ${helpBtn('illown')}</span></h3><div class="body">
+      ${cov ? `<p class="cov ${cov.smal?'smal':''}">Sammenlignes med <b>${esc(cov.fil)}</b>${cov.navne.length?` – ${cov.navne.length===1?'kun afdelingen':'afdelingerne'} ${esc(cov.navne.join(', '))}`:''}.${cov.smal?' Alt uden for den afdeling ser ud, som om I ikke har det.':''}</p>` : ''}
+      ${own ? `<div class="radio" style="flex-direction:column; align-items:flex-start; gap:8px">
+        <label><input type="radio" name="illown" value="alle" ${s.own==='alle'?'checked':''}> ligegyldigt</label>
+        <label><input type="radio" name="illown" value="ingen" ${s.own==='ingen'?'checked':''}> ingen eksemplarer</label>
+        <label><input type="radio" name="illown" value="hoejst" ${s.own==='hoejst'?'checked':''}> højst <input type="number" name="illownmax" min="0" max="99" value="${s.ownMax}" style="width:4.5em"> eksemplarer</label>
+      </div>` : `<p class="muted small">Læg samlingen op på forsiden, så kan du sammenligne med jeres egen beholdning.</p>`}
+    </div></div>
+    ${types.length>1?`<div class="sec"><h3>Mat. type</h3><div class="body"><div class="chips">${types.map(([v,n])=>`<label class="chip ${(s.types||[]).includes(v)?'on':''}"><input type="checkbox" name="illtype" value="${esc(v)}" ${(s.types||[]).includes(v)?'checked':''}> ${esc(v)} <span class="n">${nf(n)}</span></label>`).join('')}</div><p class="muted small" style="margin-top:8px">Intet valgt: alle typer.</p></div></div>`:''}
+    ${S.illTab==='ord'?`<div class="sec"><h3><span class="lbl2">Ord ${helpBtn('illord')}</span></h3><div class="body">
+      <div class="fieldrow"><input type="number" name="illminword" min="5" max="9999" value="${s.minWord}"><label>forekomster mindst</label></div>
+      <label class="small muted" style="display:block;margin:10px 0 4px">Ord der springes over</label>
+      <textarea name="stopord" rows="4" style="width:100%; font:inherit; font-size:.85rem; padding:8px; border:1px solid var(--rule); border-radius:var(--radius-s); background:var(--paper); color:var(--ink)">${esc((load('stopord',null)||STOP_DEFAULT).join(' '))}</textarea>
+      <button class="btn quiet" data-act="stopreset" style="margin-top:6px">Tilbage til standardlisten</button></div></div>`:''}
+    <div class="run"><button class="btn primary" data-act="run">Find</button><button class="btn quiet" data-act="reset">Nulstil</button></div>`;
+}
+function panelView(){
+  if (FUNCTIONS[S.fn].custom) return illPanelView();
+  const s = curSettings(); const m = S.model; const fn = S.fn;
+  let body = presetsView();
+  if (fn==='flere'){
+    body += `<div class="sec"><h3><span class="lbl2">Mindst hvor mange eksemplarer? ${helpBtn('min')}</span></h3><div class="body"><div class="fieldrow"><input type="number" name="min" min="2" max="99" value="${s.min}"><label>eksemplarer, der er</label></div>${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
+  } else {
+    body += `<div class="sec"><h3><span class="lbl2">Hjemme betyder ${helpBtn('status')}</span><span class="hint">status</span></h3><div class="body">${chipList('status', s.statuses, 'status', {collapsible:true, unit:'statusser'})}</div></div>`;
+    body += `<div class="sec"><h3><span class="lbl2">${fn==='ogsaa'?'Steder':'Sted'} ${helpBtn('sideA')}</span></h3><div class="body">
+      ${sideView('A', fn==='ogsaa'?'Hjemme her':'Hjemme her, og kun her', s.sideA, false)}
+      ${sideView('B', fn==='ogsaa'?'og også hjemme her':'og har også et eksemplar her', s.sideB, fn==='ikke')}
+      <div class="radio"><span class="muted small">Eksportér: ${helpBtn('exportWhat')}</span>
+        <label><input type="radio" name="exportWhat" value="A" ${s.exportWhat!=='AB'?'checked':''}> kun fra det første sted</label>
+        <label><input type="radio" name="exportWhat" value="AB" ${s.exportWhat==='AB'?'checked':''}> ${fn==='ogsaa'?'fra begge steder':'alle eksemplarer'}</label></div></div></div>`;
+  }
+  body += `<div class="sec"><h3><span class="lbl2">Tæl inden for samme… ${helpBtn('count')}</span></h3><div class="body"><div class="chips">${levelChecks(s.groupLevels)}</div>
+    <p class="muted small" style="margin-top:8px">Intet valgt: der tælles på tværs af hele samlingen.</p>
+    ${m.hasForf?`<div style="display:flex; align-items:center; gap:7px; margin-top:10px"><label class="chip ${s.useForf!==false?'on':''}"><input type="checkbox" name="useForf" ${s.useForf!==false?'checked':''}> Skeln mellem forfattere med samme titel</label>${helpBtn('forf')}</div>`:''}</div></div>`;
+  body += placeView(s.filters||{});
+  body += filtersView(s.filters||{});
+  body += `<div class="run"><button class="btn primary" data-act="run">Find</button><button class="btn quiet" data-act="reset" title="Sæt alle indstillinger tilbage til standard">Nulstil</button></div>`;
+  return body;
+}
+
+/* læs indstillinger fra panelet */
+function readIllPanel(){
+  const p = document.getElementById('panel'); const s = curSettings();
+  s.min = Math.max(1, parseInt(p.querySelector('input[name="illmin"]').value)||1);
+  const o = p.querySelector('input[name="illown"]:checked'); s.own = o ? o.value : 'alle';
+  const om = p.querySelector('input[name="illownmax"]'); if (om) s.ownMax = Math.max(0, parseInt(om.value)||0);
+  s.types = [...p.querySelectorAll('input[name="illtype"]:checked')].map(i=>i.value);
+  const mw = p.querySelector('input[name="illminword"]'); if (mw) s.minWord = Math.max(5, parseInt(mw.value)||5);
+  const st = p.querySelector('textarea[name="stopord"]');
+  if (st) store('stopord', st.value.split(/[\s,;]+/).map(w=>w.trim()).filter(Boolean));
+  store('last:'+S.fn, s);
+}
+function readPanel(){
+  if (FUNCTIONS[S.fn].custom) return readIllPanel();
+  const p = document.getElementById('panel'); const s = curSettings();
+  const vals = name => [...p.querySelectorAll(`input[name="${name}"]:checked`)].map(i=>i.value);
+  s.statuses = vals('status');
+  s.groupLevels = vals('groupLevel').map(Number);
+  const uf = p.querySelector('input[name="useForf"]'); s.useForf = uf ? uf.checked : true;
+  if (S.fn==='flere'){ s.min = Math.max(2, parseInt(p.querySelector('input[name="min"]').value)||2); }
+  else {
+    for (const k of ['A','B']){ const f = p.querySelector(`select[name="${k}_field"]`).value; s['side'+k] = { field:f, values: f ? vals(k+'_val') : [] }; }
+    const ew = p.querySelector('input[name="exportWhat"]:checked'); s.exportWhat = ew ? ew.value : 'A';
+  }
+  const fl = {};
+  fl.type = vals('f_type'); fl.gruppe = vals('f_gruppe');
+  S.model.levelNames.forEach((n,i)=>{ fl['lv'+i] = vals('f_lv'+i); });
+  const km = (p.querySelector('select[name="f_klass_mode"]')||{}).value||'is';
+  fl.klass = km==='between'
+    ? { mode:'between', text:'', from: ((p.querySelector('input[name="f_klass_from"]')||{}).value||'').trim(), to: ((p.querySelector('input[name="f_klass_to"]')||{}).value||'').trim() }
+    : { mode: km, text: ((p.querySelector('input[name="f_klass_text"]')||{}).value||'').trim(), from:'', to:'' };
+  s.filters = fl;
+  store('last:'+S.fn, s);
+}
+function sanitize(s, fn){
+  const m=S.model; const d = FUNCTIONS[fn].defaults(m); if (!s) return d;
+  const have = f => new Set((m.fields[f]||{values:[]}).values.map(v=>v[0]));
+  const keep = (f, arr) => Array.isArray(arr) ? arr.filter(v=>have(f).has(v)) : [];
+  const out = { ...d, ...s };
+  out.statuses = keep('status', s.statuses); if (!out.statuses.length) out.statuses = d.statuses;
+  out.groupLevels = (s.groupLevels||[]).filter(i=>i<m.maxLv);
+  const fl = {}; for (const [k,v] of Object.entries(s.filters||{})){ if (k==='klass') fl.klass=v; else if (m.fields[k]) fl[k]=keep(k,v); }
+  out.filters = fl;
+  for (const k of ['sideA','sideB']){ if (out[k]){ const f=out[k].field; out[k] = (f && m.fields[f]) ? {field:f, values:keep(f,out[k].values)} : {field:'',values:[]}; } }
+  return out;
+}
+
+/* ---------- resultater ---------- */
+function illResultsView(){
+  const R = S.results;
+  const tabs = [['titler','Titler'],['forfattere','Forfattere'],['ord','Ord']];
+  const tabbar = `<div class="tabs">${tabs.map(([id,l])=>`<button class="tab ${S.illTab===id?'on':''}" data-act="illtab" data-t="${id}">${l}</button>`).join('')}</div>`;
+  if (!R) return tabbar + `<div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her.</div>`;
+  if (R.error) return tabbar + `<div class="empty"><b>${esc(R.error)}</b></div>`;
+  if (!R.rows.length) return tabbar + `<div class="empty"><b>Ingenting matcher</b>Prøv et lavere antal eller færre afgrænsninger.</div>`;
+  const own = ownIndex();
+  const head = S.illTab==='ord'
+    ? `<tr><th>Ord</th><th class="num">Fjernlån</th><th class="num">Egne titler</th><th class="num">Overrepr.</th></tr>`
+    : S.illTab==='forfattere'
+      ? `<tr><th>Forfatter</th><th class="num">Fjernlån</th><th class="num">Værker</th>${own?`<th class="num">Egne titler</th><th class="num">Egne ex.</th>`:''}</tr>`
+      : `<tr><th>Forfatter og titel</th><th>Type</th><th class="num">Fjernlån</th>${own?`<th class="num">Egne ex.</th>`:''}</tr>`;
+  const rows = R.rows.slice(0, S.shown).map(r => S.illTab==='ord'
+      ? `<tr><td><b>${esc(r.w)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.own)}</td><td class="num">${r.lift>=10?Math.round(r.lift):r.lift.toFixed(1)}×</td></tr>`
+      : S.illTab==='forfattere'
+        ? `<tr><td><b>${esc(r.forf)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.works)}</td>${own?`<td class="num">${nf(r.ownT)}</td><td class="num">${nf(r.ownEx)}</td>`:''}</tr>`
+        : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}</td>`:''}</tr>`
+    ).join('');
+  return tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
+      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div>
+    <div class="tblwrap"><table class="ill">${`<thead>${head}</thead>`}<tbody>${rows}</tbody></table></div>
+    ${R.rows.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(R.rows.length-S.shown)} tilbage)</button></div>`:''}`;
+}
+function resultsView(){
+  if (FUNCTIONS[S.fn].custom) return illResultsView();
+  if (S.error) return `<div class="empty"><b>Det gik ikke</b>${esc(S.error)}</div>`;
+  if (!S.results) return `<div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her – du kan se og fravælge eksemplarer, før du eksporterer.</div>`;
+  const R = S.results; if (!R.length) return `<div class="empty"><b>Ingen titler matcher</b>${S.fn==='flere'?'Prøv et lavere antal, flere statusser eller færre afgrænsninger.':'Prøv andre steder, flere statusser eller færre afgrænsninger.'}</div>`;
+  const total = R.reduce((a,g)=>a+g.exp.length,0); const sel = S.checked.size;
+  const sorted = sortGroups(R);
+  const rows = sorted.slice(0,S.shown).map(groupView).join('');
+  return `<div class="rhead"><div class="sum"><b>${nf(R.length)} ${R.length===1?'titel':'titler'}</b> <span>· ${nf(total)} eksemplarer, ${nf(sel)} valgt</span></div>
+    <div class="acts"><button class="btn" data-act="print" ${sel?'':'disabled'}>${ICON.print} Hyldeliste</button><button class="btn primary" data-act="csv" ${sel?'':'disabled'}>${ICON.down} CSV til Cicero</button></div></div>
+    <div class="rtools"><button data-act="selall">Vælg alle</button><button data-act="selnone">Fravælg alle</button><button data-act="openall">Fold alle ud</button><button data-act="closeall">Fold sammen</button>
+      <div class="sort"><span>Sortér efter</span><select name="sort"><option value="forf" ${S.sort==='forf'?'selected':''}>forfatter</option><option value="titel" ${S.sort==='titel'?'selected':''}>titel</option><option value="antal" ${S.sort==='antal'?'selected':''}>antal</option><option value="plac" ${S.sort==='plac'?'selected':''}>placering</option></select></div></div>
+    <div class="grps">${rows}</div>
+    ${sorted.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(sorted.length-S.shown)} tilbage)</button></div>`:''}`;
+}
+function sortGroups(R){
+  const c = new Intl.Collator('da'); const first = g => g.hits[0]||g.items[0];
+  const by = {
+    forf: (a,b)=> c.compare(first(a).forf||'\uffff', first(b).forf||'\uffff') || c.compare(first(a).stem, first(b).stem),
+    titel:(a,b)=> c.compare(first(a).stem, first(b).stem),
+    antal:(a,b)=> b.hits.length-a.hits.length || c.compare(first(a).forf, first(b).forf),
+    plac: (a,b)=> c.compare(first(a).plac, first(b).plac) || c.compare(first(a).forf, first(b).forf),
+  };
+  return R.slice().sort(by[S.sort]||by.forf);
+}
+function groupView(g){
+  const f = g.hits[0]||g.items[0]; const expIds = new Set(g.exp.map(x=>x.id));
+  const nSel = g.exp.filter(x=>S.checked.has(x.id)).length;
+  const titles = new Set(g.items.map(x=>x.titel)); const multi = titles.size>1;
+  const marks = f.marks.length ? `<span class="badge">${esc(f.marks.join(', '))}</span>` : '';
+  const placs = [...new Set(g.hits.map(x=>x.lv.filter(Boolean).join(' / ')))];
+  const placTxt = placs.length===1 ? placs[0] : placs.length+' placeringer';
+  const open = S.open.has(g.k);
+  const items = g.items.slice().sort((a,b)=> a.plac.localeCompare(b.plac,'da') || a.titel.localeCompare(b.titel,'da')).map(x=>{
+    const inExp = expIds.has(x.id);
+    return `<tr class="${inExp?'':'dim'}"><td class="chk"><input type="checkbox" data-id="${x.id}" ${S.checked.has(x.id)?'checked':''} ${inExp?'':'disabled'}></td>
+      <td>${esc(x.titel)}</td><td>${esc(x.lv.filter(Boolean).join(' / '))}</td>
+      <td class="st"><span class="badge ${x.status==='Hjemme'?'green':''}">${esc(x.status)}</span></td><td>${esc(x.gruppe)}</td><td class="nr">${esc(x.nr)}</td></tr>`; }).join('');
+  return `<div class="grp ${open?'open':''}" data-k="${esc(g.k)}"><div class="row" data-act="toggle">
+      <button class="tog" aria-label="Fold ud">${ICON.chev}</button>
+      <input type="checkbox" data-grp="${esc(g.k)}" ${nSel===g.exp.length?'checked':''} aria-label="Vælg alle i gruppen">
+      <div class="main">${f.forf?`<span class="aut">${esc(f.forf)}</span>`:''}<span class="ttl">${esc(multi ? f.stem : f.titel)}</span>
+        <div class="meta">${marks}${multi?`<span class="badge amber">${titles.size} titelvarianter</span>`:''}<span class="badge">${esc(placTxt)}</span>${g.items.length>g.hits.length?`<span class="badge">+${g.items.length-g.hits.length} andre eksemplarer</span>`:''}</div></div>
+      <div class="cnt">${g.hits.length}<small>${nSel} valgt</small></div></div>
+    <div class="items"><div class="tblwrap"><table><thead><tr><th></th><th>Titel</th><th>Placering</th><th>Status</th><th>Gruppe</th><th>Materialenr.</th></tr></thead><tbody>${items}</tbody></table></div></div></div>`;
+}
+
+/* ---------- handlinger ---------- */
+function illRun(){
+  readIllPanel();
+  const s = curSettings(); const own = ownIndex();
+  const typeSet = new Set(s.types||[]);
+  const keep = w => !typeSet.size || [...w.types.keys()].some(t=>typeSet.has(t));
+  const ownOf = w => own ? (own.works.get(w.k)||0) : null;
+  const passOwn = c => !own || s.own==='alle' || (s.own==='ingen' ? c===0 : c<=s.ownMax);
+  let rows = [], note = '';
+  if (S.illTab === 'titler'){
+    for (const w of S.ill.works.values()){
+      if (w.n < s.min || !keep(w)) continue;
+      const c = ownOf(w); if (!passOwn(c)) continue;
+      const t = [...w.types.entries()].sort((a,b)=>b[1]-a[1])[0];
+      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c, type: t?t[0]:'' });
+    }
+    rows.sort((a,b)=> b.n-a.n || (a.forf||'').localeCompare(b.forf||'','da'));
+    note = `· ${nf(rows.reduce((a,r)=>a+r.n,0))} fjernlån i alt`;
+  } else if (S.illTab === 'forfattere'){
+    const by = new Map();
+    for (const w of S.ill.works.values()){
+      if (!w.akey || !keep(w)) continue;
+      let a = by.get(w.akey); if (!a){ a = { forf:w.forf, n:0, works:0 }; by.set(w.akey,a); }
+      a.n += w.n; a.works++;
+    }
+    for (const [akey,a] of by){
+      if (a.n < s.min) continue;
+      const o = own ? own.authors.get(akey) : null;
+      const ownT = o ? o.titler.size : 0, ownEx = o ? o.ex : 0;
+      if (own && !(s.own==='alle' || (s.own==='ingen' ? ownEx===0 : ownEx<=s.ownMax))) continue;
+      rows.push({ forf:a.forf, n:a.n, works:a.works, ownT, ownEx });
+    }
+    rows.sort((a,b)=> b.n-a.n || a.forf.localeCompare(b.forf,'da'));
+    note = '· tæller alle værker af forfatteren under ét';
+  } else {
+    if (!own) return { error:'Ordanalysen kræver, at samlingen også er lagt op på forsiden.' };
+    const stop = stopSet();
+    const cf = new Map(), cv = new Map();
+    for (const w of S.ill.works.values()){ if (!keep(w)) continue;
+      for (const word of titleWords(w.titel, stop)) cf.set(word,(cf.get(word)||0)+w.n); }
+    const seenTitle = new Set();
+    for (const x of S.model.recs){ const k = x.akey+'|'+x.tkey; if (seenTitle.has(k)) continue; seenTitle.add(k);
+      for (const word of titleWords(x.titel, stop)) cv.set(word,(cv.get(word)||0)+1); }
+    let tf=0, tv=0; for (const n of cf.values()) tf+=n; for (const n of cv.values()) tv+=n;
+    for (const [w,n] of cf){
+      if (n < s.minWord) continue;
+      const o = cv.get(w)||0;
+      const lift = (n/tf) / ((o+1)/tv);
+      rows.push({ w, n, own:o, lift });
+    }
+    rows.sort((a,b)=> b.lift-a.lift);
+    note = '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler';
+  }
+  return { rows, note };
+}
+function run(){
+  if (FUNCTIONS[S.fn].custom){
+    const r = illRun(); S.results = r; S.shown = 100;
+    const el = document.getElementById('results'); el.innerHTML = resultsView();
+    if (!r.error) toast(r.rows.length ? `${nf(r.rows.length)} fundet` : 'Ingenting matcher');
+    return;
+  }
+  readPanel(); S.error='';
+  const r = FUNCTIONS[S.fn].run(S.model, curSettings());
+  if (r && r.error){ S.error=r.error; S.results=null; }
+  else { S.results=r; S.checked=new Set(r.flatMap(g=>g.exp.map(x=>x.id))); S.open=new Set(); S.shown=150; }
+  const el = document.getElementById('results'); el.innerHTML = resultsView(); if (window.innerWidth<860) el.scrollIntoView({behavior:'smooth'});
+  if (!S.error) toast(S.results.length ? `${nf(S.results.length)} titler fundet` : 'Ingen titler matcher');
+}
+function checkedItems(){ const ids=S.checked; return S.results.flatMap(g=>g.exp.filter(x=>ids.has(x.id))); }
+function downloadLines(lines, name){
+  const blob = new Blob([lines.join('\r\n')+'\r\n'], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function illRowsForOutput(){
+  const R = S.results; if (!R || !R.rows) return null;
+  const own = ownIndex();
+  if (S.illTab==='ord') return { head:['Ord','Fjernlån','Egne titler','Overrepræsentation'], rows:R.rows.map(r=>[r.w,r.n,r.own,(Math.round(r.lift*10)/10)+'x']) };
+  if (S.illTab==='forfattere') return { head:['Forfatter','Fjernlån','Værker'].concat(own?['Egne titler','Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.n,r.works].concat(own?[r.ownT,r.ownEx]:[])) };
+  return { head:['Forfatter','Titel','Type','Fjernlån'].concat(own?['Egne eksemplarer']:[]), rows:R.rows.map(r=>[r.forf,r.titel,r.type,r.n].concat(own?[r.own]:[])) };
+}
+function illCsv(){
+  const d = illRowsForOutput(); if (!d) return;
+  const q = v => { const t = String(v==null?'':v); return /[";\r\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  const lines = [d.head.map(q).join(';')].concat(d.rows.map(r=>r.map(q).join(';')));
+  downloadLines(lines, `hyldetjek-fjernlaan-${S.illTab}-${new Date().toISOString().slice(0,10)}.csv`);
+  toast(`${nf(d.rows.length)} linjer hentet`);
+}
+function illPrint(){
+  const d = illRowsForOutput(); if (!d) return;
+  const s = curSettings(); const a = illAge();
+  const titles = {titler:'Titler', forfattere:'Forfattere', ord:'Ord i titlerne'};
+  let html = `<h1>Fjernlån: ${titles[S.illTab]}</h1><div class="pm">${new Date().toLocaleDateString('da-DK')} · ${esc(S.illFiles.join(', '))}${a?` (trukket ${esc(whenText(a.oldest))})`:''} · ${nf(d.rows.length)} linjer · mindst ${S.illTab==='ord'?s.minWord+' forekomster':s.min+' fjernlån'}</div>`;
+  html += `<table><thead><tr>${d.head.map((h,i)=>`<th${i?' class="nr"':''}>${esc(h)}</th>`).join('')}</tr></thead><tbody>`;
+  for (const r of d.rows) html += `<tr>${r.map((c,i)=>`<td${i?' class="nr"':''}>${esc(c)}</td>`).join('')}</tr>`;
+  html += '</tbody></table>';
+  document.getElementById('print').innerHTML = html;
+  window.print();
+}
+function exportCsv(){
+  const items = checkedItems().filter(x=>x.nr);
+  const seen = new Set(); const lines = []; for (const x of items){ if (!seen.has(x.nr)){ seen.add(x.nr); lines.push(x.nr); } }
+  const blob = new Blob([lines.join('\r\n')+'\r\n'], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`hyldetjek-${S.fn}-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast(`${nf(lines.length)} materialenumre hentet`);
+}
+function printList(){
+  const items = checkedItems(); const c = new Intl.Collator('da');
+  const ctx = new Map();
+  for (const g of S.results){
+    const chosen = g.exp.filter(x=>S.checked.has(x.id)); if (!chosen.length) continue;
+    const placeOf = x => x.lv.filter(Boolean).join(' / ') || '(ingen placering)';
+    for (const x of chosen){
+      const here = g.hits.filter(y=>placeOf(y)===placeOf(x)).length;
+      const others = new Map();
+      for (const y of g.hits){
+        if (placeOf(y)===placeOf(x)) continue;
+        const diff = y.lv.filter((v,i)=> v && v!==x.lv[i]).join(' / ') || placeOf(y);
+        others.set(diff, (others.get(diff)||0)+1);
+      }
+      const rest = [...others.entries()].map(([p,n])=>`${n} i ${p}`).join(', ');
+      ctx.set(x.id, `${here} af ${g.hits.length}${rest?' · '+rest:''}`);
+    }
+  }
+  items.sort((a,b)=> c.compare(a.plac,b.plac) || c.compare(a.forf||'\uffff', b.forf||'\uffff') || c.compare(a.stem,b.stem) || c.compare(a.titel,b.titel));
+  const s = curSettings(); const f = FUNCTIONS[S.fn];
+  const age = fileAge();
+  let meta = `${new Date().toLocaleDateString('da-DK')} · ${esc(S.fileName)}${age?` (trukket ${esc(whenText(age.oldest))})`:''} · ${nf(items.length)} eksemplarer`;
+  if (S.fn==='flere') meta += ` · mindst ${s.min} med status ${s.statuses.join('/')}`;
+  let html = `<h1>Hyldeliste: ${esc(f.title)}</h1><div class="pm">${meta}</div>`;
+  let cur = null;
+  for (const x of items){
+    const p = x.lv.filter(Boolean).join(' / ') || '(ingen placering)';
+    if (p !== cur){ if (cur!==null) html += '</tbody></table>'; cur = p; html += `<h2>${esc(p)}</h2><table><thead><tr><th></th><th>Forfatter og titel</th><th>Hele titlen</th><th>Status</th><th>Materialenr.</th></tr></thead><tbody>`; }
+    html += `<tr><td class="bx"><span></span></td><td>${x.forf?`<b>${esc(x.forf)}</b><br>`:''}${esc(x.titel)}</td><td class="ctx">${esc(ctx.get(x.id)||'')}</td><td>${esc(x.status)}</td><td class="nr">${esc(x.nr)}</td></tr>`;
+  }
+  if (cur!==null) html += '</tbody></table>';
+  document.getElementById('print').innerHTML = html;
+  window.print();
+}
+
+/* ---------- events ---------- */
+function bind(){ /* alt er delegeret fra $app – se init() */ }
+function init(){
+  $app.addEventListener('click', onClick);
+  $app.addEventListener('change', onChange);
+  $app.addEventListener('input', onInput);
+  ['dragenter','dragover'].forEach(ev=>$app.addEventListener(ev, e=>{ const d=e.target.closest('#drop, #illdrop'); if (d){ e.preventDefault(); d.classList.add('over'); } }));
+  $app.addEventListener('dragleave', e=>{ const d=e.target.closest('#drop, #illdrop'); if (d) d.classList.remove('over'); });
+  $app.addEventListener('drop', e=>{ const d=e.target.closest('#drop, #illdrop'); if (!d) return; e.preventDefault(); d.classList.remove('over');
+    if (d.id==='illdrop') readIll(e.dataTransfer.files, !!S.ill); else readFiles(e.dataTransfer.files, !!S.model); });
+  render();
+}
+function onClick(e){
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act==='home'){ S.view='home'; S.error=''; render(); return; }
+  if (act==='illopen'){ S.illOpen = true; render(); return; }
+  if (act==='illadd'){ document.getElementById('illInput').click(); return; }
+  if (act==='illclear'){ S.ill=null; S.illFiles=[]; S.illTimes=[]; S.illOpen=false; S.illWarn=''; if (S.fn==='fjernlaan'){ S.view='home'; } render(); return; }
+  if (act==='pick'||act==='addfiles'){ const inp=document.getElementById('fileInput'); inp.dataset.mode = act==='addfiles' ? 'append' : 'replace'; inp.click(); return; }
+  if (act==='open'){ S.fn=b.dataset.fn; S.view='tool'; S.results=null; S.error=''; S.presetName='';
+    if (FUNCTIONS[S.fn].custom){ S.settings[S.fn] = { ...FUNCTIONS[S.fn].defaults(), ...(load('last:'+S.fn,null)||{}) }; S.illTab='titler'; }
+    else { S.settings[S.fn] = sanitize(load('last:'+S.fn,null), S.fn); const d = FUNCTIONS[S.fn].defaults(S.model); if (d.statuses.length) S.settings[S.fn].statuses = d.statuses; }
+    render(); window.scrollTo(0,0); return; }
+  if (act==='applymap'){ const m={}; $app.querySelectorAll('select[data-role]').forEach(s=>{ if (s.value) m[s.dataset.role]=s.value; }); S.map=m; if (missingRoles().length){ toast('De fire første kolonner skal vælges'); return; } finishLoad(); return; }
+  if (act==='run'){ run(); return; }
+  if (act==='help'){ e.preventDefault();
+    const k = b.dataset.k;
+    const existing = $app.querySelector(`.helptext[data-k="${k}"]`);
+    if (existing){ existing.remove(); b.classList.remove('on'); return; }
+    const sum = b.closest('summary');
+    const anchor = sum || b.closest('h3') || b.closest('.radio') || b.parentElement;
+    const d = document.createElement('p'); d.className='helptext'; d.dataset.k = k; d.textContent = HELP[k] || '';
+    if (sum){ sum.parentElement.open = true; (sum.nextElementSibling || sum.parentElement).insertAdjacentElement(sum.nextElementSibling?'beforebegin':'beforeend', d); }
+    else anchor.insertAdjacentElement('afterend', d);
+    b.classList.add('on');
+    return; }
+  if (act==='sortmode'||act==='sortdir'){ e.preventDefault(); const n=b.dataset.n, f=b.dataset.f; const c={...chipSort(f,n)};
+    if (act==='sortmode') c.mode = c.mode==='abc' ? 'antal' : 'abc'; else c.dir = -c.dir;
+    S.chipSort[n]=c; const all=load('chipsort',{}); all[n]=c; store('chipsort',all);
+    if (n.startsWith('base_')){ S.baseOpen=true; render(); } else { readPanel(); rerenderPanel(); }
+    return; }
+  if (act==='togglechips'){ e.preventDefault(); const box=b.closest('.chipbox'); const collapse = !box.classList.contains('collapsed'); const nm=box.dataset.name; if (collapse) S.chipOpen.delete(nm); else S.chipOpen.add(nm); b.textContent = collapse ? b.dataset.open : 'Skjul'; if (collapse){ box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('hid', !c.querySelector('input').checked)); const any=[...box.querySelectorAll('.chip input')].some(i=>i.checked); const alle=box.querySelector('.chips .when-closed'); if (alle) alle.style.display = any?'none':''; } box.classList.toggle('collapsed', collapse); return; }
+  if (act==='allchips'||act==='nochips'){ e.preventDefault(); const box=b.closest('.chipbox'); box.querySelectorAll('input[type=checkbox]').forEach(i=>{ if (i.closest('.chip').style.display!=='none'){ i.checked = act==='allchips'; i.closest('.chip').classList.toggle('on', i.checked); } }); if ((box.dataset.name||'').startsWith('base_lv')) onBaseChange(); return; }
+  if (act==='savepreset'){ const f=document.querySelector('.saveform'); const sel=document.querySelector('select[name="preset"]'); const mine=load('presets',[]).filter(p=>p.fn===S.fn); const cur = sel.value ? mine[+sel.value] : null; f.querySelector('input[name="presetName"]').value = cur ? cur.name : ''; f.querySelector('input[name="presetFav"]').checked = !!(cur && cur.fav); f.querySelector('input[name="presetFav"]').closest('.chip').classList.toggle('on', !!(cur&&cur.fav)); f.classList.remove('hidden'); f.querySelector('input[name="presetName"]').focus(); return; }
+  if (act==='savecancel'){ document.querySelector('.saveform').classList.add('hidden'); return; }
+  if (act==='savepreset2'){ const f=document.querySelector('.saveform'); const name=f.querySelector('input[name="presetName"]').value.trim(); if (!name){ toast('Giv indstillingen et navn'); return; } const fav=f.querySelector('input[name="presetFav"]').checked; readPanel(); const all=load('presets',[]); const i=all.findIndex(p=>p.fn===S.fn&&p.name===name); const p={name, fn:S.fn, settings:curSettings(), fav}; if (i>=0) all[i]=p; else all.push(p); store('presets',all); S.presetName=name; toast(fav?'Gemt – ligger nu på forsiden':'Gemt'); rerenderPanel(); return; }
+  if (act==='reset' && FUNCTIONS[S.fn].custom){ S.settings[S.fn] = FUNCTIONS[S.fn].defaults(); S.results=null; try{ localStorage.removeItem('hyldetjek:last:'+S.fn); }catch(err){} rerenderPanel(); refreshResults(); toast('Nulstillet'); return; }
+  if (act==='reset'){ S.settings[S.fn] = FUNCTIONS[S.fn].defaults(S.model); S.presetName=''; try{ localStorage.removeItem('hyldetjek:last:'+S.fn); }catch(e){} S.results=null; S.error=''; rerenderPanel(); refreshResults(); toast('Nulstillet'); return; }
+  if (act==='fav'){ const p=load('presets',[]).find(x=>x.fn===b.dataset.fn && x.name===b.dataset.name); if (!p) return; S.fn=p.fn; S.view='tool'; S.results=null; S.error=''; S.settings[S.fn]=sanitize(p.settings, S.fn); S.presetName=p.name; render(); window.scrollTo(0,0); run(); return; }
+  if (act==='delpreset'){ const sel=document.querySelector('select[name="preset"]'); if (!sel.value){ toast('Vælg først en gemt indstilling'); return; } const mine=load('presets',[]).filter(p=>p.fn===S.fn); const victim=mine[+sel.value]; if (!confirm(`Slet "${victim.name}"?`)) return; store('presets', load('presets',[]).filter(p=>!(p.fn===victim.fn&&p.name===victim.name))); if (S.presetName===victim.name) S.presetName=''; toast('Slettet'); rerenderPanel(); return; }
+  if (act==='exportpresets'){ const all=load('presets',[]); if (!all.length){ toast('Der er ingen gemte indstillinger endnu'); return; } const blob=new Blob([JSON.stringify({hyldetjek:1, presets:all},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hyldetjek-indstillinger.json'; a.click(); return; }
+  if (act==='importpresets'){ document.getElementById('presetFile').onchange = ev => { const f=ev.target.files[0]; if (!f) return; f.text().then(t=>{ try{ const j=JSON.parse(t); if (!j||!Array.isArray(j.presets)) throw 0; const all=load('presets',[]); let n=0; for (const p of j.presets){ if (!p.fn||!p.name||!FUNCTIONS[p.fn]) continue; const i=all.findIndex(q=>q.fn===p.fn&&q.name===p.name); if (i>=0) all[i]=p; else all.push(p); n++; } store('presets',all); toast(`${n} indstillinger hentet`); rerenderPanel(); }catch(err){ toast('Filen er ikke en indstillingsfil fra Hyldetjek'); } }); }; document.getElementById('presetFile').click(); return; }
+  if (act==='toggle'){ if (e.target.closest('input')) return; const k=b.closest('.grp').dataset.k; S.open.has(k)?S.open.delete(k):S.open.add(k); b.closest('.grp').classList.toggle('open'); return; }
+  if (act==='openall'||act==='closeall'){ const all=act==='openall'; S.open = all ? new Set(S.results.map(g=>g.k)) : new Set(); document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('open',all)); return; }
+  if (act==='selall'||act==='selnone'){ S.checked = act==='selall' ? new Set(S.results.flatMap(g=>g.exp.map(x=>x.id))) : new Set(); refreshResults(); return; }
+  if (act==='more'){ S.shown += 150; refreshResults(); return; }
+  if (act==='illtab'){ S.illTab = b.dataset.t; S.results = null; S.shown = 100; rerenderPanel(); refreshResults(); return; }
+  if (act==='illcsv'){ illCsv(); return; }
+  if (act==='illprint'){ illPrint(); return; }
+  if (act==='stopreset'){ e.preventDefault(); store('stopord', STOP_DEFAULT); rerenderPanel(); toast('Standardlisten er sat tilbage'); return; }
+  if (act==='csv'){ exportCsv(); return; }
+  if (act==='dupecsv'){ downloadLines(S.dupeNrs, `hyldetjek-dobbelte-${new Date().toISOString().slice(0,10)}.csv`); toast(`${nf(S.dupeNrs.length)} materialenumre hentet`); return; }
+  if (act==='print'){ printList(); return; }
+}
+function onBaseChange(){
+  const b = {};
+  for (let i=0;i<S.full.maxLv;i++){ const ex=[...$app.querySelectorAll(`input[name="base_lv${i}"]:not(:checked)`)].map(x=>x.value); if (ex.length) b['lv'+i]=ex; }
+  S.base = b; store('base', b); S.baseOpen = true; applyBase(); S.results=null; render();
+}
+function refreshResults(){ const el=document.getElementById('results'); const y=window.scrollY; el.innerHTML=resultsView(); window.scrollTo(0,y); }
+function rerenderPanel(){
+  const panel = document.getElementById('panel');
+  const openSecs = [...panel.querySelectorAll('details.sec')].map(d=>d.open);
+  const filters = {}; panel.querySelectorAll('.chipbox').forEach(b=>{ const f=b.querySelector('.chips-filter'); if (f && f.value) filters[b.dataset.name]=f.value; });
+  const helps = [...panel.querySelectorAll('.helptext')].map(h=>h.dataset.k);
+  const y = window.scrollY;
+  panel.innerHTML = panelView();
+  panel.querySelectorAll('details.sec').forEach((d,i)=>{ if (openSecs[i]!==undefined) d.open = openSecs[i]; });
+  for (const [name,val] of Object.entries(filters)){ const f = panel.querySelector(`.chipbox[data-name="${name}"] .chips-filter`); if (f){ f.value = val; f.dispatchEvent(new Event('input', {bubbles:true})); } }
+  for (const k of helps){ const b = panel.querySelector(`.help[data-k="${k}"]`); if (b) b.click(); }
+  window.scrollTo(0, y);
+}
+function onChange(e){
+  const t = e.target;
+  if (t.matches('#illInput, #illInput2')){ const fs=[...t.files]; if (fs.length) readIll(fs, t.id==='illInput'); t.value=''; return; }
+  if (t.matches('input[type=file]') && t.id!=='presetFile'){ const fs=[...t.files]; if (fs.length) readFiles(fs, t.dataset.mode==='append'); t.value=''; return; }
+  if (t.matches('.chip input')){ t.closest('.chip').classList.toggle('on', t.checked); if (t.name.startsWith('base_lv')) onBaseChange(); return; }
+  if (t.matches('select[name="f_klass_mode"]')){ readPanel(); rerenderPanel(); return; }
+  if (t.matches('select[name="A_field"], select[name="B_field"]')){ readPanel(); rerenderPanel(); return; }
+  if (t.matches('select[name="preset"]')){ if (!t.value) return; const mine=load('presets',[]).filter(p=>p.fn===S.fn); const p=mine[+t.value]; if (p){ S.settings[S.fn]=sanitize(p.settings,S.fn); S.presetName=p.name; rerenderPanel(); toast(`"${p.name}" hentet`); } return; }
+  if (t.matches('select[name="sort"]')){ S.sort=t.value; refreshResults(); return; }
+  if (t.matches('input[data-id]')){ const id=+t.dataset.id; t.checked?S.checked.add(id):S.checked.delete(id); updateCounts(t.closest('.grp')); return; }
+  if (t.matches('input[data-grp]')){ const grp=t.closest('.grp'); const g=S.results.find(x=>x.k===t.dataset.grp); g.exp.forEach(x=> t.checked?S.checked.add(x.id):S.checked.delete(x.id)); grp.querySelectorAll('input[data-id]').forEach(i=>i.checked=t.checked); updateCounts(grp); return; }
+}
+function updateCounts(grp){
+  const g=S.results.find(x=>x.k===grp.dataset.k); const n=g.exp.filter(x=>S.checked.has(x.id)).length;
+  grp.querySelector('.cnt small').textContent = n+' valgt'; grp.querySelector('input[data-grp]').checked = n===g.exp.length;
+  const sum=document.querySelector('.rhead .sum span'); const total=S.results.reduce((a,x)=>a+x.exp.length,0);
+  if (sum) sum.textContent = `· ${nf(total)} eksemplarer, ${nf(S.checked.size)} valgt`;
+  document.querySelectorAll('[data-act="print"],[data-act="csv"]').forEach(b=>b.disabled=!S.checked.size);
+}
+function onInput(e){
+  const t=e.target;
+  if (t.matches('.chips-filter')){ const q=norm(t.value); t.closest('.chipbox').querySelectorAll('.chip').forEach(c=>{ c.style.display = !q || norm(c.dataset.v).includes(q) ? '' : 'none'; }); }
+}
+init();
+</script>
+</body>
+</html>
