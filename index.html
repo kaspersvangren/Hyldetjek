@@ -414,7 +414,7 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.16.0 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.16.1 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -478,9 +478,11 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
           det begyndte, så bunden af det lå uden for skærmen indtil man rullede
    1.16.0 Fjernlån får samme greb som resten: mat. type-listen kan søges og sorteres, resultatet
           kan sorteres, og ord i Ord-fanen kan klikkes for at se de titler, de står i
+   1.16.1 ordtallene regnes nu på de samme titler, som listen ville vise – ejerskabsfiltret talte
+          ikke med, så et ord kunne stå med et tal og give nul titler ved klik
    =================================================================== */
 
-const VERSION = '1.16.0';
+const VERSION = '1.16.1';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -1090,7 +1092,7 @@ const HELP = {
   illmin:'Hvor mange gange skal et værk være hentet hjem, før det kommer med på listen? 1 viser alt, 5 viser dem, I har lånt igen og igen.',
   illown:'Sammenligner med den samling, du har lagt op på forsiden. “Ingen eksemplarer” finder det, I slet ikke har – husk at det kun gælder den del af samlingen, der er i filen. Har du kun lagt voksenafdelingen op, ser børnebøger ud, som om I ikke har dem.',
   joker:'Forfatterfeltet er tomt i mange lokale poster, mens fjernlånsposten fra DBC har navnet med. Mangler navnet på den ene af de to filer, matches der på titlen alene, og linjen mærkes “uden forfatter”, så du kan efterprøve den. Er forfatteren udfyldt begge steder, skal den fortsat passe.',
-  illord:'Ordene sammenlignes med jeres egne titler: et ord kommer højt op, hvis det fylder meget mere i fjernlånene end på jeres hylder. Listen “ord der springes over” kan du rette i – ét ord pr. mellemrum.',
+  illord:'Ordene sammenlignes med jeres egne titler: et ord kommer højt op, hvis det fylder meget mere i fjernlånene end på jeres hylder. Der tælles på de samme titler, som Titler-fanen ville vise, så afgrænsningen “vi ejer selv” gælder også her – med “ingen eksemplarer” ser du altså ordene fra det, I ikke har. Listen “ord der springes over” kan du rette i – ét ord pr. mellemrum.',
   alder:'Filen er et øjebliksbillede af samlingen, da du trak den. Siden da kan materialer være udlånt, afleveret, flyttet eller kasseret. Jo ældre filen er, jo større er risikoen for, at listen ikke passer med hylden – at du går forgæves efter en bog, eller masseretter numre, der har ændret sig.',
   presets:'Har du en opsætning, du bruger igen og igen, kan du gemme den med et navn. Sætter du flueben i "Vis som genvej på forsiden", får du en knap på forsiden, der åbner og kører den med det samme. Del og Hent flytter dine gemte opsætninger til en anden computer eller en kollega.'
 };
@@ -1440,8 +1442,11 @@ function illRun(){
     if (!own) return { error:'Ordanalysen kræver, at samlingen også er lagt op på forsiden.' };
     const stop = stopSet();
     const cf = new Map(), cv = new Map();
-    for (const w of S.ill.works.values()){ if (!keep(w)) continue;
-      for (const word of titleWords(w.titel, stop)) cf.set(word,(cf.get(word)||0)+w.n); }
+    for (const w of S.ill.works.values()){
+      if (!keep(w)) continue;
+      const c = ownOf(w); if (!passOwn(c ? c.n : null)) continue;   // samme afgrænsning som titellisten
+      for (const word of titleWords(w.titel, stop)) cf.set(word,(cf.get(word)||0)+w.n);
+    }
     const seenTitle = new Set();
     for (const x of S.model.recs){ const k = x.akey+'|'+x.tkey; if (seenTitle.has(k)) continue; seenTitle.add(k);
       for (const word of titleWords(x.titel, stop)) cv.set(word,(cv.get(word)||0)+1); }
@@ -1453,7 +1458,7 @@ function illRun(){
       rows.push({ w, n, own:o, lift });
     }
     rows.sort(S.illSort.ord==='antal' ? (a,b)=> b.n-a.n : (a,b)=> b.lift-a.lift);
-    note = S.illSort.ord==='antal' ? '· sorteret efter antal fjernlån' : '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler';
+    note = (s.own!=='alle' ? '· kun titler, der passer på afgrænsningen ovenfor ' : '') + (S.illSort.ord==='antal' ? '· sorteret efter antal fjernlån' : '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler');
   }
   return { rows, note };
 }
