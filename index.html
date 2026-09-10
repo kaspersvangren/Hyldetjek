@@ -354,6 +354,10 @@ table.ill td{padding:8px 10px 8px 0; border-bottom:1px solid var(--rule-2); vert
 table.ill .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
 table.ill td.num{font-weight:700}
 table.ill td.zero{color:var(--red)}
+button.wordlink{background:none; border:0; padding:0; font:inherit; font-weight:700; color:var(--green); cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px}
+button.wordlink:hover{color:var(--green-3)}
+.wordchip{display:inline-flex; align-items:center; gap:8px; padding:4px 8px 4px 12px; border-radius:999px; background:var(--green-2); color:var(--green-3); font-weight:700; font-size:.85rem}
+.wordchip button{background:none; border:0; padding:0 2px; font:inherit; font-size:1rem; line-height:1; color:inherit; cursor:pointer}
 table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; white-space:nowrap}
 .totop{position:fixed; right:22px; bottom:22px; z-index:30; display:none; align-items:center; gap:7px;
   padding:10px 14px; border-radius:999px; border:1px solid var(--rule); background:var(--card); color:var(--ink);
@@ -410,7 +414,7 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.15.1 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.16.0 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -472,9 +476,11 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
           hoved bliver hængende, og der er en "Til toppen"-knap
    1.15.1 rettelse: panelets højde blev sat til en fuld skærm, uanset hvor langt nede på siden
           det begyndte, så bunden af det lå uden for skærmen indtil man rullede
+   1.16.0 Fjernlån får samme greb som resten: mat. type-listen kan søges og sorteres, resultatet
+          kan sorteres, og ord i Ord-fanen kan klikkes for at se de titler, de står i
    =================================================================== */
 
-const VERSION = '1.15.1';
+const VERSION = '1.16.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -771,7 +777,7 @@ function pickDefault(model, field, wanted){
 
 
 /* ================= UI ================= */
-const S = { fileName:'', fileCount:0, files:[], fileTimes:[], illFiles:[], illTimes:[], ill:null, illWarn:'', illTab:'titler', presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
+const S = { fileName:'', fileCount:0, files:[], fileTimes:[], illFiles:[], illTimes:[], ill:null, illWarn:'', illTab:'titler', illWord:'', illSort:{titler:'antal', forfattere:'antal', ord:'lift'}, presetName:'', dupeNrs:[], chipSort:{}, chipOpen:new Set(), headers:null, rows:null, map:null, model:null, full:null, base:{}, baseOpen:false, levelNames:null, dupes:0, view:'home', fn:null,
             settings:{}, results:null, error:'', checked:new Set(), open:new Set(), sort:'forf', shown:150, warn:'' };
 const $app = document.getElementById('app');
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1185,10 +1191,27 @@ function coverage(){
   const illTypes = new Set(S.ill ? S.ill.types.filter(t=>t[0]).map(t=>t[0]) : []);
   return { navne: vals.map(v=>v[0]), smal: vals.length === 1, fil: S.files.length===1 ? S.files[0] : S.files.length+' filer', illTypes:illTypes.size };
 }
+// Samme visning som chipList, men på en liste der ikke kommer fra samlingsmodellen.
+function illChipList(vals, selected, name, unit){
+  const sel = new Set(selected||[]);
+  const c = S.chipSort[name] || { mode:'abc', dir:1 };
+  const out = vals.slice().sort(c.mode==='abc'
+    ? (a,b)=> COL.compare(disp(a[0]), disp(b[0]))
+    : (a,b)=> b[1]-a[1] || COL.compare(disp(a[0]), disp(b[0])));
+  if (c.dir < 0) out.reverse();
+  const many = out.length > 15, long = out.length > 12;
+  const chips = out.map(([v,n]) => `<label class="chip ${sel.has(v)?'on':''}" data-v="${esc(v)}"><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.has(v)?'checked':''}> ${esc(disp(v))} <span class="n">${nf(n)}</span></label>`).join('');
+  return `<div class="chipbox ${long?'long':''}" data-name="${name}">
+    ${out.length>1?`<div class="chips-top"><span class="sorttools"><button data-act="sortmode" data-n="${name}" data-f="" title="Skift mellem alfabetisk og efter antal">${c.mode==='abc'?'A–Å':'Antal'}</button><button data-act="sortdir" data-n="${name}" data-f="" title="Vend rækkefølgen om">${c.dir>0?'↓':'↑'}</button></span></div>`:''}
+    ${many?`<input class="chips-filter" placeholder="Søg i ${out.length} ${unit}…">`:''}
+    <div class="chips">${chips}</div>
+    <div class="chips-tools"><button data-act="allchips">Vælg alle</button><button data-act="nochips">Fravælg alle</button></div></div>`;
+}
 function illPanelView(){
   const s = curSettings(); const own = ownIndex();
   const cov = coverage();
   const types = S.ill.types.filter(t=>t[0]);
+  const typeBox = illChipList(types, s.types||[], 'illtype', 'materialetyper');
   return `<div class="sec"><h3><span class="lbl2">Mindst hvor mange fjernlån? ${helpBtn('illmin')}</span></h3><div class="body">
       <div class="fieldrow"><input type="number" name="illmin" min="1" max="999" value="${s.min}"><label>gange hentet hjem</label></div></div></div>
     <div class="sec"><h3><span class="lbl2">Vi ejer selv ${helpBtn('illown')}</span></h3><div class="body">
@@ -1200,7 +1223,7 @@ function illPanelView(){
       </div>
       <div style="display:flex; align-items:center; gap:7px; margin-top:12px"><label class="chip ${s.joker!==false?'on':''}"><input type="checkbox" name="illjoker" ${s.joker!==false?'checked':''}> Match på titel alene, når forfatteren mangler</label>${helpBtn('joker')}</div>` : `<p class="muted small">Læg samlingen op på forsiden, så kan du sammenligne med jeres egen beholdning.</p>`}
     </div></div>
-    ${types.length>1?`<div class="sec"><h3>Mat. type</h3><div class="body"><div class="chips">${types.map(([v,n])=>`<label class="chip ${(s.types||[]).includes(v)?'on':''}"><input type="checkbox" name="illtype" value="${esc(v)}" ${(s.types||[]).includes(v)?'checked':''}> ${esc(v)} <span class="n">${nf(n)}</span></label>`).join('')}</div><p class="muted small" style="margin-top:8px">Intet valgt: alle typer.</p></div></div>`:''}
+    ${types.length>1?`<div class="sec"><h3>Mat. type <span class="hint">intet valgt = alle</span></h3><div class="body">${typeBox}</div></div>`:''}
     ${S.illTab==='ord'?`<div class="sec"><h3><span class="lbl2">Ord ${helpBtn('illord')}</span></h3><div class="body">
       <div class="fieldrow"><input type="number" name="illminword" min="5" max="9999" value="${s.minWord}"><label>forekomster mindst</label></div>
       <label class="small muted" style="display:block;margin:10px 0 4px">Ord der springes over</label>
@@ -1287,23 +1310,30 @@ function illResultsView(){
   const R = S.results;
   const tabs = [['titler','Titler'],['forfattere','Forfattere'],['ord','Ord']];
   const tabbar = `<div class="tabs">${tabs.map(([id,l])=>`<button class="tab ${S.illTab===id?'on':''}" data-act="illtab" data-t="${id}">${l}</button>`).join('')}</div>`;
-  if (!R) return tabbar + `<div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her.</div>`;
-  if (R.error) return tabbar + `<div class="empty"><b>${esc(R.error)}</b></div>`;
-  if (!R.rows.length) return tabbar + `<div class="empty"><b>Ingenting matcher</b>Prøv et lavere antal eller færre afgrænsninger.</div>`;
+  if (!R) return `<div class="rsticky">`+tabbar+`</div><div class="empty"><b>Sæt indstillingerne, og tryk Find</b>Resultatet vises her.</div>`;
+  if (R.error) return `<div class="rsticky">`+tabbar+`</div><div class="empty"><b>${esc(R.error)}</b></div>`;
+  if (!R.rows.length) return `<div class="rsticky">`+tabbar+`</div><div class="empty"><b>Ingenting matcher</b>${S.illWord?`Ingen titler med ordet “${esc(S.illWord)}”. <button class="linkbtn" data-act="illword" data-w="">Vis alle igen</button>`:'Prøv et lavere antal eller færre afgrænsninger.'}</div>`;
   const own = ownIndex();
+  const sortOpts = {
+    titler:[['antal','flest fjernlån'],['egne','færrest egne'],['forf','forfatter'],['titel','titel']],
+    forfattere:[['antal','flest fjernlån'],['egne','færrest egne'],['vaerker','flest værker'],['forf','forfatter']],
+    ord:[['lift','overrepræsentation'],['antal','antal fjernlån']],
+  }[S.illTab];
   const head = S.illTab==='ord'
     ? `<tr><th>Ord</th><th class="num">Fjernlån</th><th class="num">Egne titler</th><th class="num">Overrepr.</th></tr>`
     : S.illTab==='forfattere'
       ? `<tr><th>Forfatter</th><th class="num">Fjernlån</th><th class="num">Værker</th>${own?`<th class="num">Egne titler</th><th class="num">Egne ex.</th>`:''}</tr>`
       : `<tr><th>Forfatter og titel</th><th>Type</th><th class="num">Fjernlån</th>${own?`<th class="num">Egne ex.</th>`:''}</tr>`;
   const rows = R.rows.slice(0, S.shown).map(r => S.illTab==='ord'
-      ? `<tr><td><b>${esc(r.w)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.own)}</td><td class="num">${r.lift>=10?Math.round(r.lift):r.lift.toFixed(1)}×</td></tr>`
+      ? `<tr><td><button class="wordlink" data-act="illword" data-w="${esc(r.w)}" title="Vis de titler, ordet står i">${esc(r.w)}</button></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.own)}</td><td class="num">${r.lift>=10?Math.round(r.lift):r.lift.toFixed(1)}×</td></tr>`
       : S.illTab==='forfattere'
         ? `<tr><td><b>${esc(r.forf)}</b></td><td class="num">${nf(r.n)}</td><td class="num">${nf(r.works)}</td>${own?`<td class="num">${nf(r.ownT)}</td><td class="num">${nf(r.ownEx)}</td>`:''}</tr>`
         : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}${r.joker?`<span class="badge amber jk" title="Forfatteren mangler i den ene af de to filer, så der er matchet på titlen alene">uden forfatter</span>`:''}</td>`:''}</tr>`
     ).join('');
   return `<div class="rsticky">` + tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
-      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div></div>
+      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div>
+    <div class="rtools">${S.illWord?`<span class="wordchip">Ordet “${esc(S.illWord)}” – alle titler uanset antal <button data-act="illword" data-w="" aria-label="Fjern filteret">×</button></span>`:''}
+      <div class="sort"><span>Sortér efter</span><select name="illsort">${sortOpts.map(([v,l])=>`<option value="${v}" ${S.illSort[S.illTab]===v?'selected':''}>${l}</option>`).join('')}</select></div></div></div>
     <div class="tblwrap"><table class="ill">${`<thead>${head}</thead>`}<tbody>${rows}</tbody></table></div>
     ${R.rows.length>S.shown?`<div class="more"><button class="btn" data-act="more">Vis flere (${nf(R.rows.length-S.shown)} tilbage)</button></div>`:''}`;
 }
@@ -1365,13 +1395,23 @@ function illRun(){
   const passOwn = c => !own || s.own==='alle' || (s.own==='ingen' ? c===0 : c<=s.ownMax);
   let rows = [], note = '';
   if (S.illTab === 'titler'){
+    const stopW = S.illWord ? stopSet() : null;
+    const min = S.illWord ? 1 : s.min;   // ordtallene tælles uden grænse, så listen skal også være det
     for (const w of S.ill.works.values()){
-      if (w.n < s.min || !keep(w)) continue;
+      if (w.n < min || !keep(w)) continue;
+      if (S.illWord && !titleWords(w.titel, stopW).has(S.illWord)) continue;
       const c = ownOf(w); if (!passOwn(c ? c.n : null)) continue;
       const t = [...w.types.entries()].sort((a,b)=>b[1]-a[1])[0];
       rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c?c.n:null, joker:!!(c&&c.joker), type: t?t[0]:'' });
     }
-    rows.sort((a,b)=> b.n-a.n || (a.forf||'').localeCompare(b.forf||'','da'));
+    const c = new Intl.Collator('da');
+    const by = {
+      antal:(a,b)=> b.n-a.n || c.compare(a.forf||'\uffff', b.forf||'\uffff'),
+      egne:(a,b)=> (b.own||0)-(a.own||0) || b.n-a.n,
+      forf:(a,b)=> c.compare(a.forf||'\uffff', b.forf||'\uffff') || c.compare(a.titel,b.titel),
+      titel:(a,b)=> c.compare(a.titel,b.titel),
+    };
+    rows.sort(by[S.illSort.titler] || by.antal);
     note = `· ${nf(rows.reduce((a,r)=>a+r.n,0))} fjernlån i alt`;
   } else if (S.illTab === 'forfattere'){
     const by = new Map();
@@ -1387,7 +1427,14 @@ function illRun(){
       if (own && !(s.own==='alle' || (s.own==='ingen' ? ownEx===0 : ownEx<=s.ownMax))) continue;
       rows.push({ forf:a.forf, n:a.n, works:a.works, ownT, ownEx });
     }
-    rows.sort((a,b)=> b.n-a.n || a.forf.localeCompare(b.forf,'da'));
+    const c2 = new Intl.Collator('da');
+    const byA = {
+      antal:(a,b)=> b.n-a.n || c2.compare(a.forf,b.forf),
+      egne:(a,b)=> b.ownEx-a.ownEx || b.n-a.n,
+      forf:(a,b)=> c2.compare(a.forf,b.forf),
+      vaerker:(a,b)=> b.works-a.works || b.n-a.n,
+    };
+    rows.sort(byA[S.illSort.forfattere] || byA.antal);
     note = '· tæller alle værker af forfatteren under ét';
   } else {
     if (!own) return { error:'Ordanalysen kræver, at samlingen også er lagt op på forsiden.' };
@@ -1405,8 +1452,8 @@ function illRun(){
       const lift = (n/tf) / ((o+1)/tv);
       rows.push({ w, n, own:o, lift });
     }
-    rows.sort((a,b)=> b.lift-a.lift);
-    note = '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler';
+    rows.sort(S.illSort.ord==='antal' ? (a,b)=> b.n-a.n : (a,b)=> b.lift-a.lift);
+    note = S.illSort.ord==='antal' ? '· sorteret efter antal fjernlån' : '· sorteret efter hvor meget ordet fylder i fjernlånene i forhold til jeres egne titler';
   }
   return { rows, note };
 }
@@ -1551,7 +1598,8 @@ function onClick(e){
     else anchor.insertAdjacentElement('afterend', d);
     b.classList.add('on');
     return; }
-  if (act==='sortmode'||act==='sortdir'){ e.preventDefault(); const n=b.dataset.n, f=b.dataset.f; const c={...chipSort(f,n)};
+  if (act==='sortmode'||act==='sortdir'){ e.preventDefault(); const n=b.dataset.n, f=b.dataset.f;
+    const c = f ? {...chipSort(f,n)} : {...(S.chipSort[n] || {mode:'abc', dir:1})};
     if (act==='sortmode') c.mode = c.mode==='abc' ? 'antal' : 'abc'; else c.dir = -c.dir;
     S.chipSort[n]=c; const all=load('chipsort',{}); all[n]=c; store('chipsort',all);
     if (n.startsWith('base_')){ S.baseOpen=true; render(); } else { readPanel(); rerenderPanel(); }
@@ -1571,7 +1619,8 @@ function onClick(e){
   if (act==='openall'||act==='closeall'){ const all=act==='openall'; S.open = all ? new Set(S.results.map(g=>g.k)) : new Set(); document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('open',all)); return; }
   if (act==='selall'||act==='selnone'){ S.checked = act==='selall' ? new Set(S.results.flatMap(g=>g.exp.map(x=>x.id))) : new Set(); refreshResults(); return; }
   if (act==='more'){ S.shown += 150; refreshResults(); return; }
-  if (act==='illtab'){ S.illTab = b.dataset.t; S.results = null; S.shown = 100; rerenderPanel(); refreshResults(); return; }
+  if (act==='illtab'){ S.illTab = b.dataset.t; if (b.dataset.t!=='titler') S.illWord=''; S.results = null; S.shown = 100; rerenderPanel(); refreshResults(); return; }
+  if (act==='illword'){ S.illWord = b.dataset.w || ''; S.illTab = 'titler'; S.shown = 100; rerenderPanel(); run(); window.scrollTo({top:0, behavior:'smooth'}); return; }
   if (act==='illcsv'){ illCsv(); return; }
   if (act==='illprint'){ illPrint(); return; }
   if (act==='stopreset'){ e.preventDefault(); store('stopord', STOP_DEFAULT); rerenderPanel(); toast('Standardlisten er sat tilbage'); return; }
@@ -1607,6 +1656,7 @@ function onChange(e){
   if (t.matches('select[name="A_field"], select[name="B_field"]')){ readPanel(); rerenderPanel(); return; }
   if (t.matches('select[name="preset"]')){ if (!t.value) return; const mine=load('presets',[]).filter(p=>p.fn===S.fn); const p=mine[+t.value]; if (p){ S.settings[S.fn]=sanitize(p.settings,S.fn); S.presetName=p.name; rerenderPanel(); toast(`"${p.name}" hentet`); } return; }
   if (t.matches('select[name="sort"]')){ S.sort=t.value; refreshResults(); return; }
+  if (t.matches('select[name="illsort"]')){ S.illSort[S.illTab]=t.value; run(); return; }
   if (t.matches('input[data-id]')){ const id=+t.dataset.id; t.checked?S.checked.add(id):S.checked.delete(id); updateCounts(t.closest('.grp')); return; }
   if (t.matches('input[data-grp]')){ const grp=t.closest('.grp'); const g=S.results.find(x=>x.k===t.dataset.grp); g.exp.forEach(x=> t.checked?S.checked.add(x.id):S.checked.delete(x.id)); grp.querySelectorAll('input[data-id]').forEach(i=>i.checked=t.checked); updateCounts(grp); return; }
 }
