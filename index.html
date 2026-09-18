@@ -414,7 +414,7 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 /* ===================================================================
-   Hyldetjek 1.16.1 (10. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
+   Hyldetjek 1.17.0 (18. sept. 2026) — klientside-værktøj til hyldearbejde ud fra en
    materialeeksport fra Cicero. Alt sker i browseren; intet sendes.
    Versioner:
    1.0.0  første udgave: tre funktioner, hyldeliste, CSV til Cicero, gemte indstillinger
@@ -480,9 +480,11 @@ table.ill .jk{display:block; font-weight:400; font-size:.7rem; margin-top:3px; w
           kan sorteres, og ord i Ord-fanen kan klikkes for at se de titler, de står i
    1.16.1 ordtallene regnes nu på de samme titler, som listen ville vise – ejerskabsfiltret talte
           ikke med, så et ord kunne stå med et tal og give nul titler ved klik
+   1.17.0 Fjernlån kan hente materialenumrene på fjernlånsposterne som en fil, Cicero kan søge
+          med. Tabellen findes stadig som "Hent som CSV"
    =================================================================== */
 
-const VERSION = '1.16.1';
+const VERSION = '1.17.0';
 /* ---------------- kolonner ---------------- */
 const ROLES = [
   { id:'plac',   label:'Placering',      req:true,  aliases:['placering','opstilling','lokation','location'] },
@@ -903,8 +905,9 @@ function buildIll(recs){
   for (const x of uniq){
     const k = x.akey + '|' + x.tkey;
     let w = works.get(k);
-    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, tkey:x.tkey, n:0, types:new Map(), grupper:new Map() }; works.set(k,w); }
+    if (!w){ w = { k, forf:x.forf, titel:x.titel, stem:x.stem, akey:x.akey, tkey:x.tkey, n:0, nrs:[], types:new Map(), grupper:new Map() }; works.set(k,w); }
     w.n++;
+    if (x.nr) w.nrs.push(x.nr);
     if (x.type) w.types.set(x.type,(w.types.get(x.type)||0)+1);
     if (x.gruppe) w.grupper.set(x.gruppe,(w.grupper.get(x.gruppe)||0)+1);
     if (!w.forf && x.forf) w.forf = x.forf;
@@ -1089,6 +1092,7 @@ const HELP = {
   exportWhat:'Når du henter CSV til Cicero, får du materialenumrene på de eksemplarer, du skal gøre noget ved. Normalt er det dem fra det første sted.',
   places:'Her afgrænser du, hvor der overhovedet kigges. Intet valgt betyder hele samlingen. Vil du kun rydde op i krimierne, vælger du dem her.',
   filters:'Yderligere afgrænsning på materialets art. Mat. type Bog fravælger fx film og spil. Klassifikation "sk" er skønlitteratur ifølge DBC; "begynder med 64" giver mad og håndarbejde. Med "mellem" kan du tage et spænd af klassemærker, fx 99.1 til 99.94 – der læses tallet forrest, så "99.4 Ditlevsen, Tove" tæller som 99.4, og undergrupper som 64.125 kommer med, når du slutter ved 64.12.',
+  illnrs:'Fjernlånsposterne har hver sit materialenummer i Cicero. Filen indeholder dem alle for de titler, der står på listen – har en titel 24 fjernlån, kommer alle 24 numre med. Tabellen med forfatter, titel og antal får du med “Hent som CSV”.',
   illmin:'Hvor mange gange skal et værk være hentet hjem, før det kommer med på listen? 1 viser alt, 5 viser dem, I har lånt igen og igen.',
   illown:'Sammenligner med den samling, du har lagt op på forsiden. “Ingen eksemplarer” finder det, I slet ikke har – husk at det kun gælder den del af samlingen, der er i filen. Har du kun lagt voksenafdelingen op, ser børnebøger ud, som om I ikke har dem.',
   joker:'Forfatterfeltet er tomt i mange lokale poster, mens fjernlånsposten fra DBC har navnet med. Mangler navnet på den ene af de to filer, matches der på titlen alene, og linjen mærkes “uden forfatter”, så du kan efterprøve den. Er forfatteren udfyldt begge steder, skal den fortsat passe.',
@@ -1333,7 +1337,7 @@ function illResultsView(){
         : `<tr><td><b>${esc(r.forf||'—')}</b><br>${esc(r.titel)}</td><td class="small muted">${esc(r.type)}</td><td class="num">${nf(r.n)}</td>${own?`<td class="num ${r.own===0?'zero':''}">${nf(r.own)}${r.joker?`<span class="badge amber jk" title="Forfatteren mangler i den ene af de to filer, så der er matchet på titlen alene">uden forfatter</span>`:''}</td>`:''}</tr>`
     ).join('');
   return `<div class="rsticky">` + tabbar + `<div class="rhead"><div class="sum"><b>${nf(R.rows.length)} ${S.illTab==='ord'?'ord':S.illTab==='forfattere'?'forfattere':'værker'}</b> <span>${esc(R.note||'')}</span></div>
-      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn primary" data-act="illcsv">${ICON.down} Hent som CSV</button></div></div>
+      <div class="acts"><button class="btn" data-act="illprint">${ICON.print} Print</button><button class="btn" data-act="illcsv">${ICON.down} Hent som CSV</button>${S.illTab==='titler'?`<button class="btn primary" data-act="illnrs">${ICON.down} Materialenumre til Cicero</button>`:''}</div></div>
     <div class="rtools">${S.illWord?`<span class="wordchip">Ordet “${esc(S.illWord)}” – alle titler uanset antal <button data-act="illword" data-w="" aria-label="Fjern filteret">×</button></span>`:''}
       <div class="sort"><span>Sortér efter</span><select name="illsort">${sortOpts.map(([v,l])=>`<option value="${v}" ${S.illSort[S.illTab]===v?'selected':''}>${l}</option>`).join('')}</select></div></div></div>
     <div class="tblwrap"><table class="ill">${`<thead>${head}</thead>`}<tbody>${rows}</tbody></table></div>
@@ -1404,7 +1408,7 @@ function illRun(){
       if (S.illWord && !titleWords(w.titel, stopW).has(S.illWord)) continue;
       const c = ownOf(w); if (!passOwn(c ? c.n : null)) continue;
       const t = [...w.types.entries()].sort((a,b)=>b[1]-a[1])[0];
-      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c?c.n:null, joker:!!(c&&c.joker), type: t?t[0]:'' });
+      rows.push({ forf:w.forf, titel:w.titel, n:w.n, own:c?c.n:null, joker:!!(c&&c.joker), type: t?t[0]:'', nrs:w.nrs });
     }
     const c = new Intl.Collator('da');
     const by = {
@@ -1627,6 +1631,14 @@ function onClick(e){
   if (act==='illtab'){ S.illTab = b.dataset.t; if (b.dataset.t!=='titler') S.illWord=''; S.results = null; S.shown = 100; rerenderPanel(); refreshResults(); return; }
   if (act==='illword'){ S.illWord = b.dataset.w || ''; S.illTab = 'titler'; S.shown = 100; rerenderPanel(); run(); window.scrollTo({top:0, behavior:'smooth'}); return; }
   if (act==='illcsv'){ illCsv(); return; }
+  if (act==='illnrs'){
+    const R = S.results; if (!R || !R.rows) return;
+    const seen = new Set(); const lines = [];
+    for (const r of R.rows) for (const nr of (r.nrs||[])) if (!seen.has(nr)){ seen.add(nr); lines.push(nr); }
+    if (!lines.length){ toast('Ingen materialenumre i listen'); return; }
+    downloadLines(lines, `hyldetjek-fjernlaan-numre-${new Date().toISOString().slice(0,10)}.csv`);
+    toast(`${nf(lines.length)} materialenumre hentet`);
+    return; }
   if (act==='illprint'){ illPrint(); return; }
   if (act==='stopreset'){ e.preventDefault(); store('stopord', STOP_DEFAULT); rerenderPanel(); toast('Standardlisten er sat tilbage'); return; }
   if (act==='csv'){ exportCsv(); return; }
